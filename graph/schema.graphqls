@@ -1,0 +1,73 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+# To run generation go run github.com/99designs/gqlgen generate
+
+# Each line is a new potential query
+# (id:ID!) ! means the id is required
+# Thin after : is what is returned
+type Query{
+  videos(amount: Int): [Video]
+  video(id:ID!): Video
+  contentinformation(id: ID!): ContentInformation
+  statistic(id: ID!): Statistic
+  thumbnail(id: ID!): Thumbnail
+  status(id: ID!): Status
+}
+
+# Input Type is responsible for handling the input needed to create or modify a character.
+type Mutation{
+  upsertVideo(input: VideoInput!): Video!
+}
+
+# id, title, description, url, categoryid, duration, channelid, published
+type Video{
+  id: ID!
+  url: String!
+  categoryid: String!
+  duration: Int!
+  contentinformation: ContentInformation
+  thumbnail: Thumbnail
+  statistic: Statistic
+  status: Status
+
+}
+
+type ContentInformation{
+  title: String!
+  description: String!
+  published: String!
+  channelid: String!
+
+}
+
+type Thumbnail{
+  url: String!
+  
+}
+
+type Statistic {
+  likes: Int!
+  dislikes: Int!
+  views: Int!
+  favorites: Int
+  comments: Int!
+
+}
+
+enum UPLOADSTATUS{processing, error, complete}
+enum PRIVACYSTATUS{private, public}
+
+type Status{
+  uploadstatus: UPLOADSTATUS!
+  privacystatus: PRIVACYSTATUS!
+}
+
+input VideoInput {
+  id: ID!
+  url: String!
+}
+
+
+
+
