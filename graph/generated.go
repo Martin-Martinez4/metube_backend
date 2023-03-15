@@ -11,6 +11,7 @@ import (
 	"github/Martin-Martinez4/metube_backend/graph/model"
 	"strconv"
 	"sync"
+	"sync/atomic"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -38,6 +39,7 @@ type Config struct {
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Video() VideoResolver
 }
 
 type DirectiveRoot struct {
@@ -103,6 +105,12 @@ type QueryResolver interface {
 	Statistic(ctx context.Context, id string) (*model.Statistic, error)
 	Thumbnail(ctx context.Context, id string) (*model.Thumbnail, error)
 	Status(ctx context.Context, id string) (*model.Status, error)
+}
+type VideoResolver interface {
+	Contentinformation(ctx context.Context, obj *model.Video) (*model.ContentInformation, error)
+	Thumbnail(ctx context.Context, obj *model.Video) (*model.Thumbnail, error)
+	Statistic(ctx context.Context, obj *model.Video) (*model.Statistic, error)
+	Status(ctx context.Context, obj *model.Video) (*model.Status, error)
 }
 
 type executableSchema struct {
@@ -1878,7 +1886,7 @@ func (ec *executionContext) _Video_contentinformation(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Contentinformation, nil
+		return ec.resolvers.Video().Contentinformation(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1896,8 +1904,8 @@ func (ec *executionContext) fieldContext_Video_contentinformation(ctx context.Co
 	fc = &graphql.FieldContext{
 		Object:     "Video",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "title":
@@ -1929,7 +1937,7 @@ func (ec *executionContext) _Video_thumbnail(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Thumbnail, nil
+		return ec.resolvers.Video().Thumbnail(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1947,8 +1955,8 @@ func (ec *executionContext) fieldContext_Video_thumbnail(ctx context.Context, fi
 	fc = &graphql.FieldContext{
 		Object:     "Video",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "url":
@@ -1974,7 +1982,7 @@ func (ec *executionContext) _Video_statistic(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Statistic, nil
+		return ec.resolvers.Video().Statistic(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1992,8 +2000,8 @@ func (ec *executionContext) fieldContext_Video_statistic(ctx context.Context, fi
 	fc = &graphql.FieldContext{
 		Object:     "Video",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "likes":
@@ -2027,7 +2035,7 @@ func (ec *executionContext) _Video_status(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
+		return ec.resolvers.Video().Status(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2045,8 +2053,8 @@ func (ec *executionContext) fieldContext_Video_status(ctx context.Context, field
 	fc = &graphql.FieldContext{
 		Object:     "Video",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "uploadstatus":
@@ -4247,45 +4255,97 @@ func (ec *executionContext) _Video(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = ec._Video_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "url":
 
 			out.Values[i] = ec._Video_url(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "categoryid":
 
 			out.Values[i] = ec._Video_categoryid(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "duration":
 
 			out.Values[i] = ec._Video_duration(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "contentinformation":
+			field := field
 
-			out.Values[i] = ec._Video_contentinformation(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Video_contentinformation(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "thumbnail":
+			field := field
 
-			out.Values[i] = ec._Video_thumbnail(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Video_thumbnail(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "statistic":
+			field := field
 
-			out.Values[i] = ec._Video_statistic(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Video_statistic(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "status":
+			field := field
 
-			out.Values[i] = ec._Video_status(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Video_status(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

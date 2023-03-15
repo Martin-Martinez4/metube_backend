@@ -9,6 +9,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 )
 
@@ -27,6 +29,17 @@ func main() {
 		port = defaultPort
 	}
 
+	r := chi.NewRouter()
+
+	r.Use(cors.Handler(cors.Options{
+		AllowOriginFunc:  AllowOriginFunc,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
+
 	DB := db.GetDB()
 	defer DB.Close()
 
@@ -36,10 +49,19 @@ func main() {
 		VideoRepo: graph.VideoRepo{DB: DB},
 	}}))
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	r.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	// http.Handle("/query", srv)
-	http.Handle("/query", graph.DatatloaderMiddleware(DB, queryHandler))
+	r.Handle("/query", graph.DatatloaderMiddleware(DB, queryHandler))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, r))
+}
+
+func AllowOriginFunc(r *http.Request, origin string) bool {
+	// if origin == "http://example.com" {
+	// 	return true
+	// }
+	// return false
+
+	return true
 }

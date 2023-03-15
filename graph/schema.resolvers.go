@@ -17,7 +17,6 @@ func (r *mutationResolver) UpsertVideo(ctx context.Context, input model.VideoInp
 
 // Videos is the resolver for the videos field.
 func (r *queryResolver) Videos(ctx context.Context, amount *int) ([]*model.Video, error) {
-
 	// Limit the amount
 
 	rows, err := r.Resolver.VideoRepo.DB.Query("SELECT id FROM video ORDER BY RANDOM() LIMIT $1", amount)
@@ -55,45 +54,13 @@ func (r *queryResolver) Videos(ctx context.Context, amount *int) ([]*model.Video
 func (r *queryResolver) Video(ctx context.Context, id string) (*model.Video, error) {
 	video := model.Video{}
 
-	row := r.Resolver.VideoRepo.DB.QueryRow("SELECT * FROM video WHERE id = $1", id)
+	row := r.Resolver.VideoRepo.DB.QueryRow("SELECT id, url, categoryid, duration FROM video WHERE id = $1", id)
 
 	err := row.Scan(&video.ID, &video.URL, &video.Categoryid, &video.Duration)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
-
-	contentinformation, err := r.Contentinformation(ctx, id)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-
-	video.Contentinformation = contentinformation
-
-	thumbnail, err := r.Thumbnail(ctx, id)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-
-	video.Thumbnail = thumbnail
-
-	stats, err := r.Statistic(ctx, id)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-
-	video.Statistic = stats
-
-	status, err := r.Status(ctx, id)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-
-	video.Status = status
 
 	return &video, nil
 }
@@ -158,11 +125,75 @@ func (r *queryResolver) Status(ctx context.Context, id string) (*model.Status, e
 	return &status, nil
 }
 
+// Contentinformation is the resolver for the contentinformation field.
+func (r *videoResolver) Contentinformation(ctx context.Context, obj *model.Video) (*model.ContentInformation, error) {
+	row := r.Resolver.VideoRepo.DB.QueryRow("SELECT title, description, channelid, published FROM contentinformation WHERE video_id = $1", obj.ID)
+
+	contentinformation := model.ContentInformation{}
+
+	err := row.Scan(&contentinformation.Title, &contentinformation.Description, &contentinformation.Channelid, &contentinformation.Published)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return &contentinformation, nil
+}
+
+// Thumbnail is the resolver for the thumbnail field.
+func (r *videoResolver) Thumbnail(ctx context.Context, obj *model.Video) (*model.Thumbnail, error) {
+	row := r.Resolver.VideoRepo.DB.QueryRow("SELECT url FROM thumbnail WHERE video_id = $1", obj.ID)
+
+	thumbnail := model.Thumbnail{}
+
+	err := row.Scan(&thumbnail.URL)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return &thumbnail, nil
+}
+
+// Statistic is the resolver for the statistic field.
+func (r *videoResolver) Statistic(ctx context.Context, obj *model.Video) (*model.Statistic, error) {
+	row := r.Resolver.VideoRepo.DB.QueryRow("SELECT likes, dislikes, views, favorites, comments FROM statistic WHERE video_id = $1", obj.ID)
+
+	statistic := model.Statistic{}
+
+	err := row.Scan(&statistic.Likes, &statistic.Dislikes, &statistic.Views, &statistic.Favorites, &statistic.Comments)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return &statistic, nil
+}
+
+// Status is the resolver for the status field.
+func (r *videoResolver) Status(ctx context.Context, obj *model.Video) (*model.Status, error) {
+	row := r.Resolver.VideoRepo.DB.QueryRow("SELECT uploadstatus, privacystatus FROM status WHERE video_id = $1", obj.ID)
+
+	status := model.Status{}
+
+	err := row.Scan(&status.Uploadstatus, &status.Privacystatus)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return &status, nil
+}
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// Video returns VideoResolver implementation.
+func (r *Resolver) Video() VideoResolver { return &videoResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type videoResolver struct{ *Resolver }

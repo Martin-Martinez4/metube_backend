@@ -50,6 +50,16 @@ autobind:
 # modelgen, the others will be allowed when binding to fields. Configure them to
 # your liking
 models:
+  Video:
+    fields:
+      contentinformation:
+        resolver: true # force a resolver to be generated for optional fields
+      thumbnail:
+        resolver: true # force a resolver to be generated
+      statistic:
+        resolver: true # force a resolver to be generated
+      status:
+        resolver: true # force a resolver to be generated
   ID:
     model:
       - github.com/99designs/gqlgen/graphql.ID
