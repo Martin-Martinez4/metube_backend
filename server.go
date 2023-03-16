@@ -45,8 +45,11 @@ func main() {
 
 	// srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
 
+	// queryHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
+	// 	VideoRepo: graph.VideoRepo{DB: DB},
+	// }}))
 	queryHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		VideoRepo: graph.VideoRepo{DB: DB},
+		VideoService: &graph.VideoServiceSQL{DB: DB},
 	}}))
 
 	r.Handle("/", playground.Handler("GraphQL playground", "/query"))

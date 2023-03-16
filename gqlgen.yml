@@ -60,6 +60,9 @@ models:
         resolver: true # force a resolver to be generated
       status:
         resolver: true # force a resolver to be generated
+      profile:
+        resolver: true
+ 
   ID:
     model:
       - github.com/99designs/gqlgen/graphql.ID

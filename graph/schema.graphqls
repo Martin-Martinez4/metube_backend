@@ -9,10 +9,7 @@
 type Query{
   videos(amount: Int): [Video]
   video(id:ID!): Video
-  contentinformation(id: ID!): ContentInformation
-  statistic(id: ID!): Statistic
-  thumbnail(id: ID!): Thumbnail
-  status(id: ID!): Status
+ 
 }
 
 # Input Type is responsible for handling the input needed to create or modify a character.
@@ -26,10 +23,12 @@ type Video{
   url: String!
   categoryid: String!
   duration: Int!
+  profile_id: ID!
   contentinformation: ContentInformation
   thumbnail: Thumbnail
   statistic: Statistic
   status: Status
+  profile: Profile
 
 }
 
@@ -38,6 +37,14 @@ type ContentInformation{
   description: String!
   published: String!
   channelid: String!
+
+}
+
+type Profile{
+  id: ID!
+  username: String!
+  displayname: String
+  isChannel: Boolean
 
 }
 

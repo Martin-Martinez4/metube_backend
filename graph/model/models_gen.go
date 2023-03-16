@@ -15,6 +15,13 @@ type ContentInformation struct {
 	Channelid   string `json:"channelid"`
 }
 
+type Profile struct {
+	ID          string  `json:"id"`
+	Username    string  `json:"username"`
+	Displayname *string `json:"displayname"`
+	IsChannel   *bool   `json:"isChannel"`
+}
+
 type Statistic struct {
 	Likes     int  `json:"likes"`
 	Dislikes  int  `json:"dislikes"`
@@ -37,10 +44,12 @@ type Video struct {
 	URL                string              `json:"url"`
 	Categoryid         string              `json:"categoryid"`
 	Duration           int                 `json:"duration"`
+	ProfileID          string              `json:"profile_id"`
 	Contentinformation *ContentInformation `json:"contentinformation"`
 	Thumbnail          *Thumbnail          `json:"thumbnail"`
 	Statistic          *Statistic          `json:"statistic"`
 	Status             *Status             `json:"status"`
+	Profile            *Profile            `json:"profile"`
 }
 
 type VideoInput struct {
