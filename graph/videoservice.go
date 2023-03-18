@@ -13,6 +13,7 @@ type VideoService interface {
 	GetStatistic(id string) (*model.Statistic, error)
 	GetStatus(id string) (*model.Status, error)
 	GetProfile(id string) (*model.Profile, error)
+	GetMultipleVideos(amount int) ([]*model.Video, error)
 }
 
 type VideoServiceSQL struct {
@@ -32,6 +33,40 @@ func (vsql *VideoServiceSQL) GetVideoById(id string) (*model.Video, error) {
 	}
 
 	return &video, nil
+}
+
+func (vsql *VideoServiceSQL) GetMultipleVideos(amount int) ([]*model.Video, error) {
+	// Limit the amount
+
+	rows, err := vsql.DB.Query("SELECT id FROM video ORDER BY RANDOM() LIMIT $1", amount)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	videos := []*model.Video{}
+
+	var videoid string
+
+	for rows.Next() {
+
+		err := rows.Scan(&videoid)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+
+		video, err := vsql.GetVideoById(videoid)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+
+		videos = append(videos, video)
+
+	}
+
+	return videos, nil
 }
 
 func (vsql *VideoServiceSQL) GetContentInformation(id string) (*model.ContentInformation, error) {

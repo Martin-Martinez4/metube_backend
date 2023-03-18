@@ -17,73 +17,36 @@ func (r *mutationResolver) UpsertVideo(ctx context.Context, input model.VideoInp
 
 // Videos is the resolver for the videos field.
 func (r *queryResolver) Videos(ctx context.Context, amount *int) ([]*model.Video, error) {
-	// Limit the amount
-
-	// rows, err := r.Resolver.VideoRepo.DB.Query("SELECT id FROM video ORDER BY RANDOM() LIMIT $1", amount)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return nil, err
-	// }
-
-	// videos := []*model.Video{}
-
-	// var videoid string
-
-	// for rows.Next() {
-
-	// 	err := rows.Scan(&videoid)
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 		return nil, err
-	// 	}
-
-	// 	video, err := r.Video(ctx, videoid)
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 		return nil, err
-	// 	}
-
-	// 	videos = append(videos, video)
-
-	// }
-
-	// return videos, nil
-	panic("Not implemented")
+	return r.VideoService.GetMultipleVideos(*amount)
 }
 
 // Video is the resolver for the video field.
 func (r *queryResolver) Video(ctx context.Context, id string) (*model.Video, error) {
-
 	return r.VideoService.GetVideoById(id)
 }
 
 // Contentinformation is the resolver for the contentinformation field.
 func (r *videoResolver) Contentinformation(ctx context.Context, obj *model.Video) (*model.ContentInformation, error) {
-
 	return r.VideoService.GetContentInformation(obj.ID)
 }
 
 // Thumbnail is the resolver for the thumbnail field.
 func (r *videoResolver) Thumbnail(ctx context.Context, obj *model.Video) (*model.Thumbnail, error) {
-
 	return r.VideoService.GetThumbnail(obj.ID)
 }
 
 // Statistic is the resolver for the statistic field.
 func (r *videoResolver) Statistic(ctx context.Context, obj *model.Video) (*model.Statistic, error) {
-
 	return r.VideoService.GetStatistic(obj.ID)
 }
 
 // Status is the resolver for the status field.
 func (r *videoResolver) Status(ctx context.Context, obj *model.Video) (*model.Status, error) {
-
 	return r.VideoService.GetStatus(obj.ID)
 }
 
 // Profile is the resolver for the profile field.
 func (r *videoResolver) Profile(ctx context.Context, obj *model.Video) (*model.Profile, error) {
-
 	return r.VideoService.GetProfile(obj.ProfileID)
 }
 
