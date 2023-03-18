@@ -49,7 +49,8 @@ func main() {
 	// 	VideoRepo: graph.VideoRepo{DB: DB},
 	// }}))
 	queryHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		VideoService: &graph.VideoServiceSQL{DB: DB},
+		VideoService:   &graph.VideoServiceSQL{DB: DB},
+		ProfileService: &graph.ProfileServiceSQL{DB: DB},
 	}}))
 
 	r.Handle("/", playground.Handler("GraphQL playground", "/query"))

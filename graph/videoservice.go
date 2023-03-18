@@ -2,7 +2,6 @@ package graph
 
 import (
 	"database/sql"
-	"fmt"
 	"github/Martin-Martinez4/metube_backend/graph/model"
 )
 
@@ -28,7 +27,6 @@ func (vsql *VideoServiceSQL) GetVideoById(id string) (*model.Video, error) {
 
 	err := row.Scan(&video.ID, &video.URL, &video.Categoryid, &video.Duration, &video.ProfileID)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -37,33 +35,24 @@ func (vsql *VideoServiceSQL) GetVideoById(id string) (*model.Video, error) {
 
 func (vsql *VideoServiceSQL) GetMultipleVideos(amount int) ([]*model.Video, error) {
 	// Limit the amount
-
-	rows, err := vsql.DB.Query("SELECT id FROM video ORDER BY RANDOM() LIMIT $1", amount)
+	rows, err := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM video ORDER BY RANDOM() LIMIT $1", amount)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
 	videos := []*model.Video{}
 
-	var videoid string
-
 	for rows.Next() {
 
-		err := rows.Scan(&videoid)
+		video := model.Video{}
+
+		err := rows.Scan(&video.ID, &video.URL, &video.Categoryid, &video.Duration, &video.ProfileID)
+
 		if err != nil {
-			fmt.Println(err)
 			return nil, err
 		}
 
-		video, err := vsql.GetVideoById(videoid)
-		if err != nil {
-			fmt.Println(err)
-			return nil, err
-		}
-
-		videos = append(videos, video)
-
+		videos = append(videos, &video)
 	}
 
 	return videos, nil
@@ -77,7 +66,6 @@ func (vsql *VideoServiceSQL) GetContentInformation(id string) (*model.ContentInf
 
 	err := row.Scan(&contentinformation.Title, &contentinformation.Description, &contentinformation.Channelid, &contentinformation.Published)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -91,7 +79,6 @@ func (vsql *VideoServiceSQL) GetThumbnail(id string) (*model.Thumbnail, error) {
 
 	err := row.Scan(&thumbnail.URL)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -105,7 +92,6 @@ func (vsql *VideoServiceSQL) GetStatistic(id string) (*model.Statistic, error) {
 
 	err := row.Scan(&statistic.Likes, &statistic.Dislikes, &statistic.Views, &statistic.Favorites, &statistic.Comments)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -119,7 +105,6 @@ func (vsql *VideoServiceSQL) GetStatus(id string) (*model.Status, error) {
 
 	err := row.Scan(&status.Uploadstatus, &status.Privacystatus)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
@@ -133,7 +118,6 @@ func (vsql *VideoServiceSQL) GetProfile(id string) (*model.Profile, error) {
 
 	err := row.Scan(&profile.ID, &profile.Username, &profile.Displayname, &profile.IsChannel)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 

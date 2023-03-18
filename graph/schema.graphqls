@@ -9,6 +9,8 @@
 type Query{
   videos(amount: Int): [Video]
   video(id:ID!): Video
+  profile(id: ID!): Profile
+  profiles(amount: Int!): [Profile]
  
 }
 

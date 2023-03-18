@@ -25,6 +25,16 @@ func (r *queryResolver) Video(ctx context.Context, id string) (*model.Video, err
 	return r.VideoService.GetVideoById(id)
 }
 
+// Profile is the resolver for the Profile field.
+func (r *queryResolver) Profile(ctx context.Context, id string) (*model.Profile, error) {
+	return r.ProfileService.GetProfileById(id)
+}
+
+// Profiles is the resolver for the Profiles field.
+func (r *queryResolver) Profiles(ctx context.Context, amount int) ([]*model.Profile, error) {
+	return r.ProfileService.GetMultipleProfiles(amount)
+}
+
 // Contentinformation is the resolver for the contentinformation field.
 func (r *videoResolver) Contentinformation(ctx context.Context, obj *model.Video) (*model.ContentInformation, error) {
 	return r.VideoService.GetContentInformation(obj.ID)
