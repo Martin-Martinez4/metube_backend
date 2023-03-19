@@ -20,6 +20,7 @@ type Profile struct {
 	Username    string  `json:"username"`
 	Displayname *string `json:"displayname"`
 	IsChannel   *bool   `json:"isChannel"`
+	Subscribers *int    `json:"subscribers"`
 }
 
 type Statistic struct {

@@ -61,6 +61,7 @@ type ComplexityRoot struct {
 		Displayname func(childComplexity int) int
 		ID          func(childComplexity int) int
 		IsChannel   func(childComplexity int) int
+		Subscribers func(childComplexity int) int
 		Username    func(childComplexity int) int
 	}
 
@@ -194,6 +195,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Profile.IsChannel(childComplexity), true
+
+	case "Profile.subscribers":
+		if e.complexity.Profile.Subscribers == nil {
+			break
+		}
+
+		return e.complexity.Profile.Subscribers(childComplexity), true
 
 	case "Profile.username":
 		if e.complexity.Profile.Username == nil {
@@ -1015,6 +1023,47 @@ func (ec *executionContext) fieldContext_Profile_isChannel(ctx context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Profile_subscribers(ctx context.Context, field graphql.CollectedField, obj *model.Profile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Profile_subscribers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Subscribers, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Profile_subscribers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_videos(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_videos(ctx, field)
 	if err != nil {
@@ -1207,6 +1256,8 @@ func (ec *executionContext) fieldContext_Query_profile(ctx context.Context, fiel
 				return ec.fieldContext_Profile_displayname(ctx, field)
 			case "isChannel":
 				return ec.fieldContext_Profile_isChannel(ctx, field)
+			case "subscribers":
+				return ec.fieldContext_Profile_subscribers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
 		},
@@ -1269,6 +1320,8 @@ func (ec *executionContext) fieldContext_Query_profiles(ctx context.Context, fie
 				return ec.fieldContext_Profile_displayname(ctx, field)
 			case "isChannel":
 				return ec.fieldContext_Profile_isChannel(ctx, field)
+			case "subscribers":
+				return ec.fieldContext_Profile_subscribers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
 		},
@@ -2225,6 +2278,8 @@ func (ec *executionContext) fieldContext_Video_profile(ctx context.Context, fiel
 				return ec.fieldContext_Profile_displayname(ctx, field)
 			case "isChannel":
 				return ec.fieldContext_Profile_isChannel(ctx, field)
+			case "subscribers":
+				return ec.fieldContext_Profile_subscribers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
 		},
@@ -4168,6 +4223,10 @@ func (ec *executionContext) _Profile(ctx context.Context, sel ast.SelectionSet, 
 		case "isChannel":
 
 			out.Values[i] = ec._Profile_isChannel(ctx, field, obj)
+
+		case "subscribers":
+
+			out.Values[i] = ec._Profile_subscribers(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))

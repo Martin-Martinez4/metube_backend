@@ -47,6 +47,7 @@ type Profile{
   username: String!
   displayname: String
   isChannel: Boolean
+  subscribers: Int
 
 }
 
