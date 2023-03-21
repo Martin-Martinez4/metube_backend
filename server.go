@@ -3,6 +3,10 @@ package main
 import (
 	db "github/Martin-Martinez4/metube_backend/config"
 	"github/Martin-Martinez4/metube_backend/graph"
+	directives "github/Martin-Martinez4/metube_backend/graph/directives"
+	services "github/Martin-Martinez4/metube_backend/graph/services"
+	customMiddleware "github/Martin-Martinez4/metube_backend/middleware"
+
 	"log"
 	"net/http"
 	"os"
@@ -43,18 +47,22 @@ func main() {
 	DB := db.GetDB()
 	defer DB.Close()
 
-	// srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	profileService := &services.ProfileServiceSQL{DB: DB}
+	videoService := &services.VideoServiceSQL{DB: DB}
 
-	// queryHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-	// 	VideoRepo: graph.VideoRepo{DB: DB},
-	// }}))
-	queryHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		VideoService:   &graph.VideoServiceSQL{DB: DB},
-		ProfileService: &graph.ProfileServiceSQL{DB: DB},
-	}}))
+	r.Use(customMiddleware.WithTokenCookie())
+	r.Use(customMiddleware.WithWriter())
+
+	c := graph.Config{Resolvers: &graph.Resolver{
+		VideoService:   videoService,
+		ProfileService: profileService,
+	}}
+
+	c.Directives.Authorize = directives.Authorization
+
+	queryHandler := handler.NewDefaultServer(graph.NewExecutableSchema(c))
 
 	r.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	// http.Handle("/query", srv)
 	r.Handle("/query", graph.DatatloaderMiddleware(DB, queryHandler))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)

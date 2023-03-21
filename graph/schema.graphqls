@@ -7,9 +7,9 @@
 # (id:ID!) ! means the id is required
 # Thin after : is what is returned
 type Query{
-  videos(amount: Int): [Video]
+  videos(amount: Int): [Video] @authorize
   video(id:ID!): Video
-  profile(id: ID!): Profile
+  profile(username: String!): Profile
   profiles(amount: Int!): [Profile]
  
 }
@@ -29,7 +29,7 @@ type Video{
   contentinformation: ContentInformation
   thumbnail: Thumbnail
   statistic: Statistic
-  status: Status
+  status: Status 
   profile: Profile
 
 }
@@ -43,7 +43,6 @@ type ContentInformation{
 }
 
 type Profile{
-  id: ID!
   username: String!
   displayname: String
   isChannel: Boolean
@@ -65,6 +64,7 @@ type Statistic {
 
 }
 
+
 enum UPLOADSTATUS{processing, error, complete}
 enum PRIVACYSTATUS{private, public}
 
@@ -78,6 +78,6 @@ input VideoInput {
   url: String!
 }
 
-
+directive @authorize on FIELD_DEFINITION
 
 

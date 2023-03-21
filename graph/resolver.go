@@ -3,6 +3,7 @@ package graph
 import (
 	"database/sql"
 	"github/Martin-Martinez4/metube_backend/graph/model"
+	services "github/Martin-Martinez4/metube_backend/graph/services"
 )
 
 // This file will not be regenerated automatically.
@@ -16,6 +17,6 @@ type VideoRepo struct {
 // psql or other server would go here
 type Resolver struct {
 	VideoStore     map[string]model.Video
-	VideoService   VideoService
-	ProfileService ProfileService
+	VideoService   services.VideoService
+	ProfileService services.ProfileService
 }

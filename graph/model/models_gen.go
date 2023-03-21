@@ -16,7 +16,6 @@ type ContentInformation struct {
 }
 
 type Profile struct {
-	ID          string  `json:"id"`
 	Username    string  `json:"username"`
 	Displayname *string `json:"displayname"`
 	IsChannel   *bool   `json:"isChannel"`

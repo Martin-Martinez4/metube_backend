@@ -43,6 +43,7 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	Authorize func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -59,14 +60,13 @@ type ComplexityRoot struct {
 
 	Profile struct {
 		Displayname func(childComplexity int) int
-		ID          func(childComplexity int) int
 		IsChannel   func(childComplexity int) int
 		Subscribers func(childComplexity int) int
 		Username    func(childComplexity int) int
 	}
 
 	Query struct {
-		Profile  func(childComplexity int, id string) int
+		Profile  func(childComplexity int, username string) int
 		Profiles func(childComplexity int, amount int) int
 		Video    func(childComplexity int, id string) int
 		Videos   func(childComplexity int, amount *int) int
@@ -109,7 +109,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Videos(ctx context.Context, amount *int) ([]*model.Video, error)
 	Video(ctx context.Context, id string) (*model.Video, error)
-	Profile(ctx context.Context, id string) (*model.Profile, error)
+	Profile(ctx context.Context, username string) (*model.Profile, error)
 	Profiles(ctx context.Context, amount int) ([]*model.Profile, error)
 }
 type VideoResolver interface {
@@ -182,13 +182,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Profile.Displayname(childComplexity), true
 
-	case "Profile.id":
-		if e.complexity.Profile.ID == nil {
-			break
-		}
-
-		return e.complexity.Profile.ID(childComplexity), true
-
 	case "Profile.isChannel":
 		if e.complexity.Profile.IsChannel == nil {
 			break
@@ -220,7 +213,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Profile(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.Profile(childComplexity, args["username"].(string)), true
 
 	case "Query.profiles":
 		if e.complexity.Query.Profiles == nil {
@@ -506,14 +499,14 @@ func (ec *executionContext) field_Query_profile_args(ctx context.Context, rawArg
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+	if tmp, ok := rawArgs["username"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["id"] = arg0
+	args["username"] = arg0
 	return args, nil
 }
 
@@ -853,50 +846,6 @@ func (ec *executionContext) fieldContext_Mutation_upsertVideo(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Profile_id(ctx context.Context, field graphql.CollectedField, obj *model.Profile) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Profile_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Profile_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Profile",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Profile_username(ctx context.Context, field graphql.CollectedField, obj *model.Profile) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Profile_username(ctx, field)
 	if err != nil {
@@ -1077,8 +1026,28 @@ func (ec *executionContext) _Query_videos(ctx context.Context, field graphql.Col
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Videos(rctx, fc.Args["amount"].(*int))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().Videos(rctx, fc.Args["amount"].(*int))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Authorize == nil {
+				return nil, errors.New("directive authorize is not implemented")
+			}
+			return ec.directives.Authorize(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*model.Video); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github/Martin-Martinez4/metube_backend/graph/model.Video`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1226,7 +1195,7 @@ func (ec *executionContext) _Query_profile(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Profile(rctx, fc.Args["id"].(string))
+		return ec.resolvers.Query().Profile(rctx, fc.Args["username"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1248,8 +1217,6 @@ func (ec *executionContext) fieldContext_Query_profile(ctx context.Context, fiel
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Profile_id(ctx, field)
 			case "username":
 				return ec.fieldContext_Profile_username(ctx, field)
 			case "displayname":
@@ -1312,8 +1279,6 @@ func (ec *executionContext) fieldContext_Query_profiles(ctx context.Context, fie
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Profile_id(ctx, field)
 			case "username":
 				return ec.fieldContext_Profile_username(ctx, field)
 			case "displayname":
@@ -2270,8 +2235,6 @@ func (ec *executionContext) fieldContext_Video_profile(ctx context.Context, fiel
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Profile_id(ctx, field)
 			case "username":
 				return ec.fieldContext_Profile_username(ctx, field)
 			case "displayname":
@@ -4202,13 +4165,6 @@ func (ec *executionContext) _Profile(ctx context.Context, sel ast.SelectionSet, 
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Profile")
-		case "id":
-
-			out.Values[i] = ec._Profile_id(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "username":
 
 			out.Values[i] = ec._Profile_username(ctx, field, obj)
