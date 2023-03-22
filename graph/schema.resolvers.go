@@ -15,6 +15,22 @@ func (r *mutationResolver) UpsertVideo(ctx context.Context, input model.VideoInp
 	panic(fmt.Errorf("not implemented: UpsertVideo - upsertVideo"))
 }
 
+// Login is the resolver for the login field.
+func (r *mutationResolver) Login(ctx context.Context, login model.LoginInput) (*model.Profile, error) {
+	profile, err := r.AuthService.Login(ctx, login)
+	if err != nil {
+		return nil, err
+	}
+
+	return profile, err
+}
+
+// Register is the resolver for the register field.
+func (r *mutationResolver) Register(ctx context.Context, profile model.RegisterInput) (*model.Profile, error) {
+	// Validate profile here
+	panic(fmt.Errorf("not implemented: Register - register"))
+}
+
 // Videos is the resolver for the videos field.
 func (r *queryResolver) Videos(ctx context.Context, amount *int) ([]*model.Video, error) {
 	return r.VideoService.GetMultipleVideos(*amount)

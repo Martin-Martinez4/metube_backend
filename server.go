@@ -47,6 +47,7 @@ func main() {
 	DB := db.GetDB()
 	defer DB.Close()
 
+	authService := &services.AuthServiceSQL{DB: DB}
 	profileService := &services.ProfileServiceSQL{DB: DB}
 	videoService := &services.VideoServiceSQL{DB: DB}
 
@@ -54,6 +55,7 @@ func main() {
 	r.Use(customMiddleware.WithWriter())
 
 	c := graph.Config{Resolvers: &graph.Resolver{
+		AuthService:    authService,
 		VideoService:   videoService,
 		ProfileService: profileService,
 	}}

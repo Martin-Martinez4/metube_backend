@@ -57,6 +57,18 @@ type VideoInput struct {
 	URL string `json:"url"`
 }
 
+type LoginInput struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type RegisterInput struct {
+	Username    string `json:"username"`
+	Displayname string `json:"displayname"`
+	Password    string `json:"password"`
+	Password2   string `json:"password2"`
+}
+
 type Privacystatus string
 
 const (

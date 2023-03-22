@@ -17,6 +17,8 @@ type Query{
 # Input Type is responsible for handling the input needed to create or modify a character.
 type Mutation{
   upsertVideo(input: VideoInput!): Video!
+  login(login: loginInput!): Profile
+  register(profile: registerInput!): Profile
 }
 
 # id, title, description, url, categoryid, duration, channelid, published
@@ -76,6 +78,18 @@ type Status{
 input VideoInput {
   id: ID!
   url: String!
+}
+
+input loginInput{
+  username: String!
+  password: String!
+}
+
+input registerInput{
+  username: String!
+  displayname: String!
+  password: String!
+  password2: String!
 }
 
 directive @authorize on FIELD_DEFINITION

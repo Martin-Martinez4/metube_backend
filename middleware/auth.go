@@ -8,8 +8,6 @@ import (
 	"os"
 	"time"
 
-	services "github/Martin-Martinez4/metube_backend/graph/services"
-
 	"github.com/golang-jwt/jwt"
 )
 
@@ -55,22 +53,16 @@ func WithWriter() func(http.Handler) http.Handler {
 	}
 }
 
-func CreateJWT(username string, ps services.ProfileService) (string, error) {
+func CreateJWT(id string) (string, error) {
 
-	id, err := ps.GetProfileIdFromUsername(username)
-	if err != nil {
-
-		return "", err
-	}
-
-	// For now set the profile id later change to set the session id
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"exp":        time.Now().Add(10 * time.Minute),
-		"id":         id,
-		"authorized": true,
+		"id":        id,
+		"ExpiresAt": time.Now().Add(10 * time.Minute).UnixMilli(),
 	})
 
-	tokenString, err := token.SignedString(os.Getenv("JWT_SECRET"))
+	JWT_SECRET := []byte(os.Getenv("JWT_SECRET"))
+	tokenString, err := token.SignedString([]byte(JWT_SECRET))
+
 	if err != nil {
 		return "", err
 	}
@@ -78,32 +70,37 @@ func CreateJWT(username string, ps services.ProfileService) (string, error) {
 	return tokenString, nil
 }
 
-func ValidateJWT(tokenString string) (bool, error) {
+// Vlaidate and Parse JWT
+func ValidateJWT(tokenString string) (jwt.MapClaims, error) {
+
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 
 		// verify algorithm used
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		JWT_SECRET := os.Getenv("JWT_SECRET")
+		JWT_SECRET := []byte(os.Getenv("JWT_SECRET"))
 
-		hmacSampleSecret := []byte(JWT_SECRET)
-		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
-		return hmacSampleSecret, nil
+		return JWT_SECRET, nil
 
 	})
 	if err != nil {
 
-		return false, err
+		return nil, err
 	}
 
-	_, ok := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(jwt.MapClaims)
 
-	if !ok || !token.Valid {
+	if !ok {
 
-		return false, errors.New("token validation error")
+		return nil, errors.New("token format error")
 	}
 
-	return true, nil
+	if !token.Valid {
+
+		return nil, errors.New("token validation error")
+	}
+
+	return claims, nil
 
 }

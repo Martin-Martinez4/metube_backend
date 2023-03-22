@@ -17,6 +17,7 @@ type VideoRepo struct {
 // psql or other server would go here
 type Resolver struct {
 	VideoStore     map[string]model.Video
+	AuthService    services.AuthService
 	VideoService   services.VideoService
 	ProfileService services.ProfileService
 }
