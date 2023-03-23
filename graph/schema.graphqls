@@ -18,7 +18,8 @@ type Query{
 type Mutation{
   upsertVideo(input: VideoInput!): Video!
   login(login: loginInput!): Profile
-  register(profile: registerInput!): Profile
+  register(profileToRegister: registerInput!): Profile
+  subscribe(subscribee: String!): Boolean! @authorize
 }
 
 # id, title, description, url, categoryid, duration, channelid, published

@@ -26,13 +26,25 @@ func (r *mutationResolver) Login(ctx context.Context, login model.LoginInput) (*
 }
 
 // Register is the resolver for the register field.
-func (r *mutationResolver) Register(ctx context.Context, profile model.RegisterInput) (*model.Profile, error) {
+func (r *mutationResolver) Register(ctx context.Context, profileToRegister model.RegisterInput) (*model.Profile, error) {
 	// Validate profile here
-	panic(fmt.Errorf("not implemented: Register - register"))
+	profile, err := r.AuthService.Register(ctx, profileToRegister)
+	if err != nil {
+		return nil, err
+	}
+
+	return profile, err
+}
+
+// Subscribe is the resolver for the subscribe field.
+func (r *mutationResolver) Subscribe(ctx context.Context, subscribee string) (bool, error) {
+	// panic(fmt.Errorf("not implemented: Subscribe - subscribe"))
+	return r.ProfileService.Subscribe(ctx, subscribee)
 }
 
 // Videos is the resolver for the videos field.
 func (r *queryResolver) Videos(ctx context.Context, amount *int) ([]*model.Video, error) {
+
 	return r.VideoService.GetMultipleVideos(*amount)
 }
 

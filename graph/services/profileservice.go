@@ -1,7 +1,9 @@
 package services
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"github/Martin-Martinez4/metube_backend/graph/model"
 )
 
@@ -9,6 +11,7 @@ type ProfileService interface {
 	GetProfileIdFromUsername(username string) (string, error)
 	GetProfileByUsername(username string) (*model.Profile, error)
 	GetMultipleProfiles(amount int) ([]*model.Profile, error)
+	Subscribe(ctx context.Context, subscribee string) (bool, error)
 }
 
 type ProfileServiceSQL struct {
@@ -70,4 +73,19 @@ func (psql *ProfileServiceSQL) GetMultipleProfiles(amount int) ([]*model.Profile
 
 	return profiles, nil
 
+}
+
+func (psql *ProfileServiceSQL) Subscribe(ctx context.Context, subscribee string) (bool, error) {
+
+	subscriberId := ctx.Value("user")
+	if subscriberId == nil {
+		return false, errors.New("token is nil")
+	}
+
+	_, err := psql.DB.Exec("INSERT INTO subscriber_subscribee(subscriber_id, subscribee_id) SELECT $1, id FROM profile WHERE username = $2 ON CONFLICT DO NOTHING", subscriberId.(string), subscribee)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

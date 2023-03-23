@@ -56,7 +56,8 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		Login       func(childComplexity int, login model.LoginInput) int
-		Register    func(childComplexity int, profile model.RegisterInput) int
+		Register    func(childComplexity int, profileToRegister model.RegisterInput) int
+		Subscribe   func(childComplexity int, subscribee string) int
 		UpsertVideo func(childComplexity int, input model.VideoInput) int
 	}
 
@@ -108,7 +109,8 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	UpsertVideo(ctx context.Context, input model.VideoInput) (*model.Video, error)
 	Login(ctx context.Context, login model.LoginInput) (*model.Profile, error)
-	Register(ctx context.Context, profile model.RegisterInput) (*model.Profile, error)
+	Register(ctx context.Context, profileToRegister model.RegisterInput) (*model.Profile, error)
+	Subscribe(ctx context.Context, subscribee string) (bool, error)
 }
 type QueryResolver interface {
 	Videos(ctx context.Context, amount *int) ([]*model.Video, error)
@@ -189,7 +191,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.Register(childComplexity, args["profile"].(model.RegisterInput)), true
+		return e.complexity.Mutation.Register(childComplexity, args["profileToRegister"].(model.RegisterInput)), true
+
+	case "Mutation.subscribe":
+		if e.complexity.Mutation.Subscribe == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_subscribe_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.Subscribe(childComplexity, args["subscribee"].(string)), true
 
 	case "Mutation.upsertVideo":
 		if e.complexity.Mutation.UpsertVideo == nil {
@@ -514,14 +528,29 @@ func (ec *executionContext) field_Mutation_register_args(ctx context.Context, ra
 	var err error
 	args := map[string]interface{}{}
 	var arg0 model.RegisterInput
-	if tmp, ok := rawArgs["profile"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("profile"))
+	if tmp, ok := rawArgs["profileToRegister"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("profileToRegister"))
 		arg0, err = ec.unmarshalNregisterInput2githubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐRegisterInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["profile"] = arg0
+	args["profileToRegister"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_subscribe_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["subscribee"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subscribee"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["subscribee"] = arg0
 	return args, nil
 }
 
@@ -982,21 +1011,18 @@ func (ec *executionContext) _Mutation_register(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().Register(rctx, fc.Args["profile"].(model.RegisterInput))
+		return ec.resolvers.Mutation().Register(rctx, fc.Args["profileToRegister"].(model.RegisterInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Profile)
 	fc.Result = res
-	return ec.marshalNProfile2ᚖgithubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐProfile(ctx, field.Selections, res)
+	return ec.marshalOProfile2ᚖgithubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐProfile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_register(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1027,6 +1053,81 @@ func (ec *executionContext) fieldContext_Mutation_register(ctx context.Context, 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_register_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_subscribe(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_subscribe(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().Subscribe(rctx, fc.Args["subscribee"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Authorize == nil {
+				return nil, errors.New("directive authorize is not implemented")
+			}
+			return ec.directives.Authorize(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_subscribe(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_subscribe_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -4431,6 +4532,12 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 				return ec._Mutation_register(ctx, field)
 			})
 
+		case "subscribe":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_subscribe(ctx, field)
+			})
+
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -5235,20 +5342,6 @@ func (ec *executionContext) unmarshalNPRIVACYSTATUS2githubᚋMartinᚑMartinez4�
 
 func (ec *executionContext) marshalNPRIVACYSTATUS2githubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐPrivacystatus(ctx context.Context, sel ast.SelectionSet, v model.Privacystatus) graphql.Marshaler {
 	return v
-}
-
-func (ec *executionContext) marshalNProfile2githubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐProfile(ctx context.Context, sel ast.SelectionSet, v model.Profile) graphql.Marshaler {
-	return ec._Profile(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNProfile2ᚖgithubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐProfile(ctx context.Context, sel ast.SelectionSet, v *model.Profile) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Profile(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
