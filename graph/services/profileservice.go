@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"github/Martin-Martinez4/metube_backend/graph/model"
+	"github/Martin-Martinez4/metube_backend/utils"
 )
 
 type ProfileService interface {
@@ -77,7 +78,7 @@ func (psql *ProfileServiceSQL) GetMultipleProfiles(amount int) ([]*model.Profile
 
 func (psql *ProfileServiceSQL) Subscribe(ctx context.Context, subscribee string) (bool, error) {
 
-	subscriberId := ctx.Value("user")
+	subscriberId := ctx.Value(utils.UserKey)
 	if subscriberId == nil {
 		return false, errors.New("token is nil")
 	}

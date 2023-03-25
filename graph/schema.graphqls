@@ -7,7 +7,7 @@
 # (id:ID!) ! means the id is required
 # Thin after : is what is returned
 type Query{
-  videos(amount: Int): [Video] @authorize
+  videos(amount: Int): [Video]
   video(id:ID!): Video
   profile(username: String!): Profile
   profiles(amount: Int!): [Profile]

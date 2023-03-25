@@ -3,27 +3,18 @@ package config
 import (
 	"database/sql"
 	"fmt"
-	"log"
-	"os"
 
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 var db *sql.DB
 
-func GetDB() *sql.DB {
-
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+func GetDB(driverName string, sqlURI string) *sql.DB {
 
 	if db == nil {
 
-		DB_URL := os.Getenv("DB_URL")
-
-		db, err = sql.Open("postgres", DB_URL)
+		_db, err := sql.Open(driverName, sqlURI)
+		db = _db
 		if err != nil {
 			panic(err)
 		}
@@ -36,8 +27,4 @@ func GetDB() *sql.DB {
 
 	return db
 
-}
-
-func goDotEnvVariable(s string) {
-	panic("unimplemented")
 }

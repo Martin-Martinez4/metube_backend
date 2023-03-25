@@ -44,7 +44,6 @@ func (r *mutationResolver) Subscribe(ctx context.Context, subscribee string) (bo
 
 // Videos is the resolver for the videos field.
 func (r *queryResolver) Videos(ctx context.Context, amount *int) ([]*model.Video, error) {
-
 	return r.VideoService.GetMultipleVideos(*amount)
 }
 

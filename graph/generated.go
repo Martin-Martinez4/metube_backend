@@ -1314,28 +1314,8 @@ func (ec *executionContext) _Query_videos(ctx context.Context, field graphql.Col
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().Videos(rctx, fc.Args["amount"].(*int))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.Authorize == nil {
-				return nil, errors.New("directive authorize is not implemented")
-			}
-			return ec.directives.Authorize(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.([]*model.Video); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github/Martin-Martinez4/metube_backend/graph/model.Video`, tmp)
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Videos(rctx, fc.Args["amount"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

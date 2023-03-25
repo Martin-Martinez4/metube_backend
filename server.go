@@ -32,6 +32,7 @@ func main() {
 	if port == "" {
 		port = defaultPort
 	}
+	DB_URL := os.Getenv("DB_URL")
 
 	r := chi.NewRouter()
 
@@ -44,7 +45,7 @@ func main() {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	DB := db.GetDB()
+	DB := db.GetDB("postgres", DB_URL)
 	defer DB.Close()
 
 	authService := &services.AuthServiceSQL{DB: DB}

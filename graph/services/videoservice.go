@@ -111,8 +111,8 @@ func (vsql *VideoServiceSQL) GetStatus(id string) (*model.Status, error) {
 	return &status, nil
 }
 
-func (vsql *VideoServiceSQL) GetProfile(username string) (*model.Profile, error) {
-	row := vsql.DB.QueryRow("SELECT username, displayname, ischannel FROM profile WHERE id = $1", username)
+func (vsql *VideoServiceSQL) GetProfile(id string) (*model.Profile, error) {
+	row := vsql.DB.QueryRow("SELECT username, displayname, ischannel FROM profile WHERE id = $1", id)
 
 	profile := model.Profile{}
 
