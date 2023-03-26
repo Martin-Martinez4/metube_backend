@@ -2,8 +2,9 @@ package services
 
 import (
 	"context"
+	config "github/Martin-Martinez4/metube_backend/config"
 	"github/Martin-Martinez4/metube_backend/graph/model"
-	helpers "github/Martin-Martinez4/metube_backend/graph/services/testHelpers"
+	helpers "github/Martin-Martinez4/metube_backend/testHelpers"
 	"github/Martin-Martinez4/metube_backend/utils"
 	"net/http"
 	"net/http/httptest"
@@ -14,7 +15,9 @@ import (
 
 func TestProfileServiceSQL_GetProfileIdFromUsername(t *testing.T) {
 
-	DB := helpers.StartTestDB()
+	TEST_DB_URL := config.ReadEnv("../../.env").TEST_DB_URL
+
+	DB := config.GetDB("postgres", TEST_DB_URL)
 	defer DB.Close()
 
 	type args struct {
@@ -62,7 +65,9 @@ func TestProfileServiceSQL_GetProfileIdFromUsername(t *testing.T) {
 
 func TestProfileServiceSQL_GetProfileByUsername(t *testing.T) {
 
-	DB := helpers.StartTestDB()
+	TEST_DB_URL := config.ReadEnv("../../.env").TEST_DB_URL
+
+	DB := config.GetDB("postgres", TEST_DB_URL)
 	defer DB.Close()
 
 	type args struct {
@@ -110,7 +115,9 @@ func TestProfileServiceSQL_GetProfileByUsername(t *testing.T) {
 
 func TestProfileServiceSQL_GetMultipleProfiles(t *testing.T) {
 
-	DB := helpers.StartTestDB()
+	TEST_DB_URL := config.ReadEnv("../../.env").TEST_DB_URL
+
+	DB := config.GetDB("postgres", TEST_DB_URL)
 	defer DB.Close()
 
 	type args struct {
@@ -193,7 +200,9 @@ func TestProfileServiceSQL_GetMultipleProfiles(t *testing.T) {
 
 func TestProfileServiceSQL_Subscribe(t *testing.T) {
 
-	DB := helpers.StartTestDB()
+	TEST_DB_URL := config.ReadEnv("../../.env").TEST_DB_URL
+
+	DB := config.GetDB("postgres", TEST_DB_URL)
 	defer DB.Close()
 	subscriberId := "6adbb5ec-13c3-46c8-9b94-3c9f2cf1a660"
 

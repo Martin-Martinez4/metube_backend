@@ -19,24 +19,31 @@ func Authorization(ctx context.Context, obj interface{}, next graphql.Resolver) 
 	tokencookie := ctx.Value(utils.TokenCookieKey)
 	if tokencookie == nil {
 		// block calling the next resolver
-		return nil, errors.New("access denied")
+		return nil, errors.New("no token present, access denied")
 	}
 
 	// validate token here
-	token := strings.Split(tokencookie.(string), "Bearer ")[1]
+	tokenSlice := strings.Split(tokencookie.(string), "Bearer ")
+	if len(tokenSlice) < 2 {
+
+		return nil, errors.New("malformed token, access denied")
+
+	}
+
+	token := tokenSlice[1]
+
 	claims, err := utils.ValidateJWT(token)
 	if err != nil || claims == nil {
 
-		return nil, errors.New("access denied")
+		return nil, errors.New("jwt validation error, access denied")
 	}
 
 	idFromClaims := claims["id"].(string)
 	if idFromClaims == "" {
-		return nil, errors.New("access denied")
+		return nil, errors.New("claim id is empty. access denied")
 	}
 
-	// newctx := context.WithValue(ctx, "test", "test")
-	newctx := context.WithValue(ctx, "user", idFromClaims)
+	newctx := context.WithValue(ctx, utils.UserKey, idFromClaims)
 
 	return next(newctx)
 }

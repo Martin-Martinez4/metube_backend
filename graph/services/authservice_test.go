@@ -2,8 +2,9 @@ package services
 
 import (
 	"context"
+	db "github/Martin-Martinez4/metube_backend/config"
 	"github/Martin-Martinez4/metube_backend/graph/model"
-	helpers "github/Martin-Martinez4/metube_backend/graph/services/testHelpers"
+	helpers "github/Martin-Martinez4/metube_backend/testHelpers"
 	"github/Martin-Martinez4/metube_backend/utils"
 	"net/http/httptest"
 	"reflect"
@@ -14,7 +15,10 @@ import (
 
 func TestAuthServiceSQL_Login(t *testing.T) {
 
-	DB := helpers.StartTestDB()
+	TEST_DB_URL := db.ReadEnv("../../.env").TEST_DB_URL
+
+	DB := db.GetDB("postgres", TEST_DB_URL)
+
 	defer DB.Close()
 
 	type args struct {
@@ -86,7 +90,9 @@ func TestAuthServiceSQL_Login(t *testing.T) {
 // Need to access a db from a docker file
 func TestAuthServiceSQL_Register(t *testing.T) {
 
-	DB := helpers.StartTestDB()
+	TEST_DB_URL := db.ReadEnv("../../.env").TEST_DB_URL
+
+	DB := db.GetDB("postgres", TEST_DB_URL)
 	defer DB.Close()
 
 	type args struct {
