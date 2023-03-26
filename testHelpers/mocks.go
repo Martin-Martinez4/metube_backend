@@ -8,7 +8,9 @@ import (
 type MyContext struct{}
 
 func (ctx MyContext) Deadline() (deadline time.Time, ok bool) {
+	// Deadline happens right away
 	// return deadline, ok
+	//No deadline
 	return
 }
 

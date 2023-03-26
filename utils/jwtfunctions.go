@@ -9,11 +9,11 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func CreateJWT(id string) (string, error) {
+func CreateJWT(id string, minutesValid time.Duration) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":        id,
-		"ExpiresAt": time.Now().Add(10 * time.Minute).UnixMilli(),
+		"ExpiresAt": time.Now().Add(minutesValid * time.Minute).UnixMilli(),
 	})
 
 	JWT_SECRET := []byte(os.Getenv("JWT_SECRET"))

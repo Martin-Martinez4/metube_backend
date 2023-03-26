@@ -21,13 +21,13 @@ func Resolver(ctx context.Context) (res interface{}, err error) {
 
 func TestAuthorization(t *testing.T) {
 
-	validJWT, err := utils.CreateJWT(testHelpers.Anime_channel_id)
+	validJWT, err := utils.CreateJWT(testHelpers.Anime_channel_id, 10)
 	if err != nil {
 
 		t.Errorf("error creating jwt token")
 
 	}
-	emptyIdJWT, err2 := utils.CreateJWT("")
+	emptyIdJWT, err2 := utils.CreateJWT("", 10)
 	if err2 != nil {
 
 		t.Errorf("error creating jwt token")

@@ -40,6 +40,7 @@ func GetVars() *envVars {
 
 type Config struct {
 	TEST_DB_URL string
+	JWT_SECRET  string
 }
 
 var config *Config
@@ -60,8 +61,10 @@ func ReadEnv(pathToEnv string) *Config {
 			panic(err)
 		}
 		TEST_DB_URL, _ := os.LookupEnv("TEST_DB_URL")
+		JWT_SECRET, _ := os.LookupEnv("JWT_SECRET")
 		config = &Config{
 			TEST_DB_URL: TEST_DB_URL,
+			JWT_SECRET:  JWT_SECRET,
 		}
 
 	}

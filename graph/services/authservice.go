@@ -43,7 +43,7 @@ func (authsql *AuthServiceSQL) Login(ctx context.Context, login model.LoginInput
 		return nil, errors.New("passwords do not mach")
 	}
 
-	jwtToken, err := utils.CreateJWT(idFromDB)
+	jwtToken, err := utils.CreateJWT(idFromDB, 10)
 	if err != nil {
 		return nil, err
 
@@ -117,7 +117,7 @@ func (authsql *AuthServiceSQL) Register(ctx context.Context, profile model.Regis
 		return nil, fail(err)
 	}
 
-	jwtToken, err := utils.CreateJWT(id)
+	jwtToken, err := utils.CreateJWT(id, 10)
 	if err != nil {
 		return nil, err
 
