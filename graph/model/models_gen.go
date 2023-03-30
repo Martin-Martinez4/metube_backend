@@ -12,7 +12,7 @@ type Comment struct {
 	ID         string       `json:"id"`
 	DatePosted string       `json:"datePosted"`
 	Body       string       `json:"body"`
-	Video      *Video       `json:"Video"`
+	VideoID    *string      `json:"video_id"`
 	Profile    *Profile     `json:"Profile"`
 	ParentID   *string      `json:"parent_id"`
 	Status     *LikeDislike `json:"status"`

@@ -71,7 +71,7 @@ type Comment{
   id: ID!,
   datePosted: String!,
   body: String!,
-  Video: Video,
+  video_id: String,
   Profile: Profile,
   parent_id: String,
   status: LIKE_DISLIKE

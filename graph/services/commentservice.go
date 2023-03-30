@@ -106,6 +106,7 @@ func (csql *CommentServiceSQL) CreateComment(ctx context.Context, comment model.
 	valueArgs := []any{}
 	i := 0
 
+	// mentions in the body
 	pattern := regexp.MustCompile(`\B\@([\w\-]+)`)
 	mentions := pattern.FindAllString(comment.Body, 20)
 
@@ -141,6 +142,8 @@ func (csql *CommentServiceSQL) CreateComment(ctx context.Context, comment model.
 }
 
 func (csql *CommentServiceSQL) CreateResponse(ctx context.Context, comment model.CommentInput, parentCommentID string) (bool, error) {
+
+	// Handle setting parent comment id in the frontend
 
 	commentorId := ctx.Value(utils.UserKey)
 	if commentorId == nil {
@@ -204,13 +207,10 @@ func (csql *CommentServiceSQL) CreateResponse(ctx context.Context, comment model
 
 func (csql *CommentServiceSQL) GetVideoComments(ctx context.Context, videoID string) ([]*model.Comment, error) {
 
-	// SELECT *, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = 'd5f8c643-ecb9-4c7d-a7a7-2a498559593f')FROM comment WHERE video_id ='3d7eeca5-f0d5-4752-b213-b8e9445627f2';
 	profileId := ctx.Value(utils.UserKey)
 
 	var rows *sql.Rows
 	var err error
-
-	println(profileId)
 
 	if profileId != nil {
 
@@ -245,11 +245,70 @@ func (csql *CommentServiceSQL) GetVideoComments(ctx context.Context, videoID str
 
 	return comments, nil
 
-	// panic("GetVideoComments not implemented")
 }
 func (csql *CommentServiceSQL) GetCommentResponses(ctx context.Context, commentID string) ([]*model.Comment, error) {
-	panic("GetCommentResponses not implemented")
+	profileId := ctx.Value(utils.UserKey)
+
+	var rows *sql.Rows
+	var err error
+
+	if profileId != nil {
+
+		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE parent_comment = $2", profileId, commentID)
+		if err != nil {
+			return nil, err
+		}
+
+	} else {
+
+		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, NULL AS status FROM comment WHERE parent_comment = $1", commentID)
+		if err != nil {
+			return nil, err
+		}
+
+	}
+
+	comments := []*model.Comment{}
+
+	for rows.Next() {
+
+		comment := model.Comment{}
+
+		err := rows.Scan(&comment.ID, &comment.DatePosted, &comment.Body, &comment.ParentID, &comment.Status)
+		if err != nil {
+			return nil, err
+		}
+
+		comments = append(comments, &comment)
+
+	}
+
+	return comments, nil
 }
 func (csql *CommentServiceSQL) GetMentions(ctx context.Context) ([]*model.Comment, error) {
-	panic("GetMentions not implemented")
+
+	profileId := ctx.Value(utils.UserKey)
+	if profileId == nil {
+		return nil, errors.New("access denied")
+	}
+
+	rows, err := csql.DB.Query("SELECT id, date_posted, body, parent_comment, video_id FROM comment JOIN profile_comment_mention ON profile_comment_mention.profile_id = $1", profileId)
+	if err != nil {
+
+		return nil, err
+	}
+
+	mentions := []*model.Comment{}
+
+	for rows.Next() {
+
+		mention := model.Comment{}
+
+		rows.Scan(&mention.ID, &mention.DatePosted, &mention.Body, &mention.ParentID, &mention.VideoID)
+
+		mentions = append(mentions, &mention)
+
+	}
+
+	return mentions, nil
 }

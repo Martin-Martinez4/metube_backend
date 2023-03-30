@@ -55,7 +55,7 @@ type ComplexityRoot struct {
 		ParentID   func(childComplexity int) int
 		Profile    func(childComplexity int) int
 		Status     func(childComplexity int) int
-		Video      func(childComplexity int) int
+		VideoID    func(childComplexity int) int
 	}
 
 	ContentInformation struct {
@@ -218,12 +218,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Comment.Status(childComplexity), true
 
-	case "Comment.Video":
-		if e.complexity.Comment.Video == nil {
+	case "Comment.video_id":
+		if e.complexity.Comment.VideoID == nil {
 			break
 		}
 
-		return e.complexity.Comment.Video(childComplexity), true
+		return e.complexity.Comment.VideoID(childComplexity), true
 
 	case "ContentInformation.channelid":
 		if e.complexity.ContentInformation.Channelid == nil {
@@ -1212,8 +1212,8 @@ func (ec *executionContext) fieldContext_Comment_body(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Comment_Video(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Comment_Video(ctx, field)
+func (ec *executionContext) _Comment_video_id(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Comment_video_id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1226,7 +1226,7 @@ func (ec *executionContext) _Comment_Video(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Video, nil
+		return obj.VideoID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1235,41 +1235,19 @@ func (ec *executionContext) _Comment_Video(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Video)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalOVideo2ᚖgithubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐVideo(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Comment_Video(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Comment_video_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Video_id(ctx, field)
-			case "url":
-				return ec.fieldContext_Video_url(ctx, field)
-			case "categoryid":
-				return ec.fieldContext_Video_categoryid(ctx, field)
-			case "duration":
-				return ec.fieldContext_Video_duration(ctx, field)
-			case "profile_id":
-				return ec.fieldContext_Video_profile_id(ctx, field)
-			case "contentinformation":
-				return ec.fieldContext_Video_contentinformation(ctx, field)
-			case "thumbnail":
-				return ec.fieldContext_Video_thumbnail(ctx, field)
-			case "statistic":
-				return ec.fieldContext_Video_statistic(ctx, field)
-			case "status":
-				return ec.fieldContext_Video_status(ctx, field)
-			case "profile":
-				return ec.fieldContext_Video_profile(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Video", field.Name)
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2915,8 +2893,8 @@ func (ec *executionContext) fieldContext_Query_getVideoComments(ctx context.Cont
 				return ec.fieldContext_Comment_datePosted(ctx, field)
 			case "body":
 				return ec.fieldContext_Comment_body(ctx, field)
-			case "Video":
-				return ec.fieldContext_Comment_Video(ctx, field)
+			case "video_id":
+				return ec.fieldContext_Comment_video_id(ctx, field)
 			case "Profile":
 				return ec.fieldContext_Comment_Profile(ctx, field)
 			case "parent_id":
@@ -3006,8 +2984,8 @@ func (ec *executionContext) fieldContext_Query_getCommentResponses(ctx context.C
 				return ec.fieldContext_Comment_datePosted(ctx, field)
 			case "body":
 				return ec.fieldContext_Comment_body(ctx, field)
-			case "Video":
-				return ec.fieldContext_Comment_Video(ctx, field)
+			case "video_id":
+				return ec.fieldContext_Comment_video_id(ctx, field)
 			case "Profile":
 				return ec.fieldContext_Comment_Profile(ctx, field)
 			case "parent_id":
@@ -3201,8 +3179,8 @@ func (ec *executionContext) fieldContext_Query_getMentions(ctx context.Context, 
 				return ec.fieldContext_Comment_datePosted(ctx, field)
 			case "body":
 				return ec.fieldContext_Comment_body(ctx, field)
-			case "Video":
-				return ec.fieldContext_Comment_Video(ctx, field)
+			case "video_id":
+				return ec.fieldContext_Comment_video_id(ctx, field)
 			case "Profile":
 				return ec.fieldContext_Comment_Profile(ctx, field)
 			case "parent_id":
@@ -6133,9 +6111,9 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Video":
+		case "video_id":
 
-			out.Values[i] = ec._Comment_Video(ctx, field, obj)
+			out.Values[i] = ec._Comment_video_id(ctx, field, obj)
 
 		case "Profile":
 

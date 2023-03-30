@@ -103,7 +103,7 @@ func (r *queryResolver) GetVideoComments(ctx context.Context, videoID string) ([
 
 // GetCommentResponses is the resolver for the getCommentResponses field.
 func (r *queryResolver) GetCommentResponses(ctx context.Context, commentID string) ([]*model.Comment, error) {
-	panic(fmt.Errorf("not implemented: GetCommentResponses - getCommentResponses"))
+	return r.CommentService.GetCommentResponses(ctx, commentID)
 }
 
 // Profile is the resolver for the Profile field.
@@ -118,7 +118,7 @@ func (r *queryResolver) Profiles(ctx context.Context, amount int) ([]*model.Prof
 
 // GetMentions is the resolver for the getMentions field.
 func (r *queryResolver) GetMentions(ctx context.Context) ([]*model.Comment, error) {
-	panic(fmt.Errorf("not implemented: GetMentions - getMentions"))
+	return r.CommentService.GetMentions(ctx)
 }
 
 // Contentinformation is the resolver for the contentinformation field.
