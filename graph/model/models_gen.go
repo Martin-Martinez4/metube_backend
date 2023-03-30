@@ -8,6 +8,21 @@ import (
 	"strconv"
 )
 
+type Comment struct {
+	ID         string       `json:"id"`
+	DatePosted string       `json:"datePosted"`
+	Body       string       `json:"body"`
+	Video      *Video       `json:"Video"`
+	Profile    *Profile     `json:"Profile"`
+	ParentID   *string      `json:"parent_id"`
+	Status     *LikeDislike `json:"status"`
+}
+
+type CommentInput struct {
+	Body    string `json:"body"`
+	VideoID string `json:"VideoId"`
+}
+
 type ContentInformation struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
@@ -67,6 +82,47 @@ type RegisterInput struct {
 	Displayname string `json:"displayname"`
 	Password    string `json:"password"`
 	Password2   string `json:"password2"`
+}
+
+type LikeDislike string
+
+const (
+	LikeDislikeLike    LikeDislike = "like"
+	LikeDislikeDislike LikeDislike = "dislike"
+)
+
+var AllLikeDislike = []LikeDislike{
+	LikeDislikeLike,
+	LikeDislikeDislike,
+}
+
+func (e LikeDislike) IsValid() bool {
+	switch e {
+	case LikeDislikeLike, LikeDislikeDislike:
+		return true
+	}
+	return false
+}
+
+func (e LikeDislike) String() string {
+	return string(e)
+}
+
+func (e *LikeDislike) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = LikeDislike(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid LIKE_DISLIKE", str)
+	}
+	return nil
+}
+
+func (e LikeDislike) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type Privacystatus string

@@ -38,8 +38,52 @@ func (r *mutationResolver) Register(ctx context.Context, profileToRegister model
 
 // Subscribe is the resolver for the subscribe field.
 func (r *mutationResolver) Subscribe(ctx context.Context, subscribee string) (bool, error) {
-	// panic(fmt.Errorf("not implemented: Subscribe - subscribe"))
 	return r.ProfileService.Subscribe(ctx, subscribee)
+}
+
+// VideoView is the resolver for the videoView field.
+func (r *mutationResolver) VideoView(ctx context.Context, videoID string) (bool, error) {
+	return r.ProfileService.VideoView(ctx, videoID)
+}
+
+// LikeVideo is the resolver for the likeVideo field.
+func (r *mutationResolver) LikeVideo(ctx context.Context, videoID string) (bool, error) {
+	return r.ProfileService.LikeVideo(ctx, videoID)
+}
+
+// DislikeVideo is the resolver for the dislikeVideo field.
+func (r *mutationResolver) DislikeVideo(ctx context.Context, videoID string) (bool, error) {
+	return r.ProfileService.DislikeVideo(ctx, videoID)
+}
+
+// DeleteLikeDislikeVideo is the resolver for the deleteLikeDislikeVideo field.
+func (r *mutationResolver) DeleteLikeDislikeVideo(ctx context.Context, videoID string) (bool, error) {
+	return r.ProfileService.DeleteLikeDislikeVideo(ctx, videoID)
+}
+
+// CreateComment is the resolver for the createComment field.
+func (r *mutationResolver) CreateComment(ctx context.Context, comment model.CommentInput) (bool, error) {
+	return r.CommentService.CreateComment(ctx, comment)
+}
+
+// CreateResponse is the resolver for the createResponse field.
+func (r *mutationResolver) CreateResponse(ctx context.Context, comment model.CommentInput, parentCommentID string) (bool, error) {
+	return r.CommentService.CreateResponse(ctx, comment, parentCommentID)
+}
+
+// LikeComment is the resolver for the likeComment field.
+func (r *mutationResolver) LikeComment(ctx context.Context, commentID string) (bool, error) {
+	return r.CommentService.LikeComment(ctx, commentID)
+}
+
+// DislikeComment is the resolver for the dislikeComment field.
+func (r *mutationResolver) DislikeComment(ctx context.Context, commentID string) (bool, error) {
+	return r.CommentService.DislikeComment(ctx, commentID)
+}
+
+// DeleteLikeDislikeComment is the resolver for the deleteLikeDislikeComment field.
+func (r *mutationResolver) DeleteLikeDislikeComment(ctx context.Context, commentID string) (bool, error) {
+	return r.CommentService.DeleteLikeDislikeComment(ctx, commentID)
 }
 
 // Videos is the resolver for the videos field.
@@ -52,6 +96,16 @@ func (r *queryResolver) Video(ctx context.Context, id string) (*model.Video, err
 	return r.VideoService.GetVideoById(id)
 }
 
+// GetVideoComments is the resolver for the getVideoComments field.
+func (r *queryResolver) GetVideoComments(ctx context.Context, videoID string) ([]*model.Comment, error) {
+	return r.CommentService.GetVideoComments(ctx, videoID)
+}
+
+// GetCommentResponses is the resolver for the getCommentResponses field.
+func (r *queryResolver) GetCommentResponses(ctx context.Context, commentID string) ([]*model.Comment, error) {
+	panic(fmt.Errorf("not implemented: GetCommentResponses - getCommentResponses"))
+}
+
 // Profile is the resolver for the Profile field.
 func (r *queryResolver) Profile(ctx context.Context, username string) (*model.Profile, error) {
 	return r.ProfileService.GetProfileByUsername(username)
@@ -60,6 +114,11 @@ func (r *queryResolver) Profile(ctx context.Context, username string) (*model.Pr
 // Profiles is the resolver for the Profiles field.
 func (r *queryResolver) Profiles(ctx context.Context, amount int) ([]*model.Profile, error) {
 	return r.ProfileService.GetMultipleProfiles(amount)
+}
+
+// GetMentions is the resolver for the getMentions field.
+func (r *queryResolver) GetMentions(ctx context.Context) ([]*model.Comment, error) {
+	panic(fmt.Errorf("not implemented: GetMentions - getMentions"))
 }
 
 // Contentinformation is the resolver for the contentinformation field.

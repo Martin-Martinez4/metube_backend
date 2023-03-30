@@ -51,6 +51,7 @@ func main() {
 	authService := &services.AuthServiceSQL{DB: DB}
 	profileService := &services.ProfileServiceSQL{DB: DB}
 	videoService := &services.VideoServiceSQL{DB: DB}
+	commentService := &services.CommentServiceSQL{DB: DB}
 
 	r.Use(customMiddleware.WithTokenCookie())
 	r.Use(customMiddleware.WithWriter())
@@ -59,9 +60,11 @@ func main() {
 		AuthService:    authService,
 		VideoService:   videoService,
 		ProfileService: profileService,
+		CommentService: commentService,
 	}}
 
 	c.Directives.Authorize = directives.Authorization
+	c.Directives.Authorizeoptional = directives.AuthorizationOptional
 
 	queryHandler := handler.NewDefaultServer(graph.NewExecutableSchema(c))
 

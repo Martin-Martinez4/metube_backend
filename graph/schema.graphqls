@@ -9,8 +9,17 @@
 type Query{
   videos(amount: Int): [Video]
   video(id:ID!): Video
+
+  getVideoComments(video_id: String!): [Comment]! @authorizeoptional
+  getCommentResponses(comment_id: String!): [Comment]! @authorizeoptional
+
   profile(username: String!): Profile
   profiles(amount: Int!): [Profile]
+  getMentions: [Comment]!
+
+
+
+
  
 }
 
@@ -19,7 +28,20 @@ type Mutation{
   upsertVideo(input: VideoInput!): Video!
   login(login: loginInput!): Profile
   register(profileToRegister: registerInput!): Profile
+
   subscribe(subscribee: String!): Boolean! @authorize
+  videoView(video_id: String!) :Boolean! @authorize
+  likeVideo(video_id: String!): Boolean! @authorize
+  dislikeVideo(video_id: String!): Boolean! @authorize
+  deleteLikeDislikeVideo(video_id: String!): Boolean! @authorize
+
+  createComment(comment: CommentInput!): Boolean! @authorize
+  createResponse(comment: CommentInput!, parent_comment_id: String!): Boolean! @authorize
+  likeComment(comment_id: String!): Boolean! @authorize
+  dislikeComment(comment_id: String!): Boolean! @authorize
+  deleteLikeDislikeComment(comment_id: String!): Boolean! @authorize
+
+
 }
 
 # id, title, description, url, categoryid, duration, channelid, published
@@ -43,6 +65,16 @@ type ContentInformation{
   published: String!
   channelid: String!
 
+}
+
+type Comment{
+  id: ID!,
+  datePosted: String!,
+  body: String!,
+  Video: Video,
+  Profile: Profile,
+  parent_id: String,
+  status: LIKE_DISLIKE
 }
 
 type Profile{
@@ -70,10 +102,16 @@ type Statistic {
 
 enum UPLOADSTATUS{processing, error, complete}
 enum PRIVACYSTATUS{private, public}
+enum LIKE_DISLIKE{like, dislike}
 
 type Status{
   uploadstatus: UPLOADSTATUS!
   privacystatus: PRIVACYSTATUS!
+}
+
+input CommentInput {
+  body: String!,
+  VideoId: String!,
 }
 
 input VideoInput {
@@ -94,5 +132,6 @@ input registerInput{
 }
 
 directive @authorize on FIELD_DEFINITION
+directive @authorizeoptional on FIELD_DEFINITION
 
 

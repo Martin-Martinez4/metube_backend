@@ -20,4 +20,5 @@ type Resolver struct {
 	AuthService    services.AuthService
 	VideoService   services.VideoService
 	ProfileService services.ProfileService
+	CommentService services.CommentService
 }

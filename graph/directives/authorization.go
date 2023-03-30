@@ -47,3 +47,37 @@ func Authorization(ctx context.Context, obj interface{}, next graphql.Resolver) 
 
 	return next(newctx)
 }
+
+func AuthorizationOptional(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+
+	tokencookie := ctx.Value(utils.TokenCookieKey)
+	if tokencookie == nil {
+		// block calling the next resolver
+		return next(ctx)
+	}
+
+	// validate token here
+	tokenSlice := strings.Split(tokencookie.(string), "Bearer ")
+	if len(tokenSlice) < 2 {
+
+		return next(ctx)
+
+	}
+
+	token := tokenSlice[1]
+
+	claims, err := utils.ValidateJWT(token)
+	if err != nil || claims == nil {
+
+		return next(ctx)
+	}
+
+	idFromClaims := claims["id"].(string)
+	if idFromClaims == "" {
+		return next(ctx)
+	}
+
+	newctx := context.WithValue(ctx, utils.UserKey, idFromClaims)
+
+	return next(newctx)
+}
