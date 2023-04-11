@@ -440,7 +440,10 @@ func TestVideoServiceSQL_GetProfile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.vsql.GetProfile(tt.args.id)
+
+			ctx := helpers.MyContext{}
+
+			got, err := tt.vsql.GetProfile(ctx, tt.args.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("VideoServiceSQL.GetProfile() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -8,17 +8,15 @@
 # Thin after : is what is returned
 type Query{
   videos(amount: Int): [Video]
-  video(id:ID!): Video
+  video(id:ID!): Video @authorizeoptional
+  getVideoLikeStatus(id:ID!): LIKE_DISLIKE @authorize
 
   getVideoComments(video_id: String!): [Comment]! @authorizeoptional
   getCommentResponses(comment_id: String!): [Comment]! @authorizeoptional
 
-  profile(username: String!): Profile
+  profile(username: String!): Profile @authorizeoptional
   profiles(amount: Int!): [Profile]
   getMentions: [Comment]!
-
-
-
 
  
 }
@@ -30,6 +28,7 @@ type Mutation{
   register(profileToRegister: registerInput!): Profile
 
   subscribe(subscribee: String!): Boolean! @authorize
+  unsubscribe(subscribee: String!): Boolean! @authorize
   videoView(video_id: String!) :Boolean! @authorize
   likeVideo(video_id: String!): Boolean! @authorize
   dislikeVideo(video_id: String!): Boolean! @authorize
@@ -72,9 +71,9 @@ type Comment{
   datePosted: String!,
   body: String!,
   video_id: String,
-  Profile: Profile,
   parent_id: String,
   status: LIKE_DISLIKE
+  Profile: Profile,
 }
 
 type Profile{
@@ -82,6 +81,7 @@ type Profile{
   displayname: String
   isChannel: Boolean
   subscribers: Int
+  userIsSubscribedTo: Boolean
 
 }
 

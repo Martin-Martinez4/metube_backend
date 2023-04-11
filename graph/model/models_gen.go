@@ -8,16 +8,6 @@ import (
 	"strconv"
 )
 
-type Comment struct {
-	ID         string       `json:"id"`
-	DatePosted string       `json:"datePosted"`
-	Body       string       `json:"body"`
-	VideoID    *string      `json:"video_id"`
-	Profile    *Profile     `json:"Profile"`
-	ParentID   *string      `json:"parent_id"`
-	Status     *LikeDislike `json:"status"`
-}
-
 type CommentInput struct {
 	Body    string `json:"body"`
 	VideoID string `json:"VideoId"`
@@ -31,10 +21,11 @@ type ContentInformation struct {
 }
 
 type Profile struct {
-	Username    string  `json:"username"`
-	Displayname *string `json:"displayname"`
-	IsChannel   *bool   `json:"isChannel"`
-	Subscribers *int    `json:"subscribers"`
+	Username           string  `json:"username"`
+	Displayname        *string `json:"displayname"`
+	IsChannel          *bool   `json:"isChannel"`
+	Subscribers        *int    `json:"subscribers"`
+	UserIsSubscribedTo *bool   `json:"userIsSubscribedTo"`
 }
 
 type Statistic struct {
@@ -52,19 +43,6 @@ type Status struct {
 
 type Thumbnail struct {
 	URL string `json:"url"`
-}
-
-type Video struct {
-	ID                 string              `json:"id"`
-	URL                string              `json:"url"`
-	Categoryid         string              `json:"categoryid"`
-	Duration           int                 `json:"duration"`
-	ProfileID          string              `json:"profile_id"`
-	Contentinformation *ContentInformation `json:"contentinformation"`
-	Thumbnail          *Thumbnail          `json:"thumbnail"`
-	Statistic          *Statistic          `json:"statistic"`
-	Status             *Status             `json:"status"`
-	Profile            *Profile            `json:"profile"`
 }
 
 type VideoInput struct {

@@ -10,6 +10,12 @@ import (
 	"github/Martin-Martinez4/metube_backend/graph/model"
 )
 
+// Profile is the resolver for the Profile field.
+func (r *commentResolver) Profile(ctx context.Context, obj *model.Comment) (*model.Profile, error) {
+	// return r.CommentService.GetProfile(ctx, obj.ID)
+	return GetProfileLoader(ctx).Load(obj.ID)
+}
+
 // UpsertVideo is the resolver for the upsertVideo field.
 func (r *mutationResolver) UpsertVideo(ctx context.Context, input model.VideoInput) (*model.Video, error) {
 	panic(fmt.Errorf("not implemented: UpsertVideo - upsertVideo"))
@@ -39,6 +45,11 @@ func (r *mutationResolver) Register(ctx context.Context, profileToRegister model
 // Subscribe is the resolver for the subscribe field.
 func (r *mutationResolver) Subscribe(ctx context.Context, subscribee string) (bool, error) {
 	return r.ProfileService.Subscribe(ctx, subscribee)
+}
+
+// Unsubscribe is the resolver for the unsubscribe field.
+func (r *mutationResolver) Unsubscribe(ctx context.Context, subscribee string) (bool, error) {
+	return r.ProfileService.Unsubscribe(ctx, subscribee)
 }
 
 // VideoView is the resolver for the videoView field.
@@ -96,6 +107,11 @@ func (r *queryResolver) Video(ctx context.Context, id string) (*model.Video, err
 	return r.VideoService.GetVideoById(id)
 }
 
+// GetVideoLikeStatus is the resolver for the getVideoLikeStatus field.
+func (r *queryResolver) GetVideoLikeStatus(ctx context.Context, id string) (*model.LikeDislike, error) {
+	return r.VideoService.GetVideoLikeStatus(ctx, id)
+}
+
 // GetVideoComments is the resolver for the getVideoComments field.
 func (r *queryResolver) GetVideoComments(ctx context.Context, videoID string) ([]*model.Comment, error) {
 	return r.CommentService.GetVideoComments(ctx, videoID)
@@ -108,7 +124,7 @@ func (r *queryResolver) GetCommentResponses(ctx context.Context, commentID strin
 
 // Profile is the resolver for the Profile field.
 func (r *queryResolver) Profile(ctx context.Context, username string) (*model.Profile, error) {
-	return r.ProfileService.GetProfileByUsername(username)
+	return r.ProfileService.GetProfileByUsername(ctx, username)
 }
 
 // Profiles is the resolver for the Profiles field.
@@ -143,8 +159,11 @@ func (r *videoResolver) Status(ctx context.Context, obj *model.Video) (*model.St
 
 // Profile is the resolver for the profile field.
 func (r *videoResolver) Profile(ctx context.Context, obj *model.Video) (*model.Profile, error) {
-	return r.VideoService.GetProfile(obj.ProfileID)
+	return r.VideoService.GetProfile(ctx, obj.ProfileID)
 }
+
+// Comment returns CommentResolver implementation.
+func (r *Resolver) Comment() CommentResolver { return &commentResolver{r} }
 
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
@@ -155,6 +174,7 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 // Video returns VideoResolver implementation.
 func (r *Resolver) Video() VideoResolver { return &videoResolver{r} }
 
+type commentResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type videoResolver struct{ *Resolver }

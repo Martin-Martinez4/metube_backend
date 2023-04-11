@@ -51,6 +51,7 @@ autobind:
 # your liking
 models:
   Video:
+    model: github/Martin-Martinez4/metube_backend/graph/model.Video
     fields:
       contentinformation:
         resolver: true # force a resolver to be generated for optional fields
@@ -61,7 +62,12 @@ models:
       status:
         resolver: true # force a resolver to be generated
       profile:
-        resolver: true
+        resolver: true # force a resolver to be generated
+  Comment:
+    model: github/Martin-Martinez4/metube_backend/graph/model.Comment
+    fields:
+      profile:
+        resolver: true # force a resolver to be generated
  
   ID:
     model:

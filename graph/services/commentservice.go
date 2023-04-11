@@ -22,6 +22,7 @@ type CommentService interface {
 
 	GetVideoComments(ctx context.Context, videoID string) ([]*model.Comment, error)
 	GetCommentResponses(ctx context.Context, commentID string) ([]*model.Comment, error)
+	GetProfile(ctx context.Context, commentId string) (*model.Profile, error)
 	GetMentions(ctx context.Context) ([]*model.Comment, error)
 }
 
@@ -214,6 +215,8 @@ func (csql *CommentServiceSQL) GetVideoComments(ctx context.Context, videoID str
 
 	if profileId != nil {
 
+		fmt.Println("SELECT id, date_posted, body, parent_comment, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE video_id = $2")
+
 		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE video_id = $2", profileId, videoID)
 		if err != nil {
 			return nil, err
@@ -221,6 +224,7 @@ func (csql *CommentServiceSQL) GetVideoComments(ctx context.Context, videoID str
 
 	} else {
 
+		fmt.Println("SELECT id, date_posted, body, parent_comment, NULL AS status FROM comment WHERE video_id = $1")
 		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, NULL AS status FROM comment WHERE video_id = $1", videoID)
 		if err != nil {
 			return nil, err
@@ -246,6 +250,7 @@ func (csql *CommentServiceSQL) GetVideoComments(ctx context.Context, videoID str
 	return comments, nil
 
 }
+
 func (csql *CommentServiceSQL) GetCommentResponses(ctx context.Context, commentID string) ([]*model.Comment, error) {
 	profileId := ctx.Value(utils.UserKey)
 
@@ -285,6 +290,8 @@ func (csql *CommentServiceSQL) GetCommentResponses(ctx context.Context, commentI
 
 	return comments, nil
 }
+
+// maybe move to profie service
 func (csql *CommentServiceSQL) GetMentions(ctx context.Context) ([]*model.Comment, error) {
 
 	profileId := ctx.Value(utils.UserKey)
@@ -311,4 +318,34 @@ func (csql *CommentServiceSQL) GetMentions(ctx context.Context) ([]*model.Commen
 	}
 
 	return mentions, nil
+}
+
+func (csql *CommentServiceSQL) GetProfile(ctx context.Context, commentId string) (*model.Profile, error) {
+
+	profileId := ctx.Value(utils.UserKey)
+
+	var row *sql.Row
+
+	if profileId == nil {
+
+		fmt.Println("SELECT username, displayname, isChannel, subscribers, false AS user_subscribed FROM profile WHERE id = (SELECT profile_id FROM comment WHERE comment.id = $1)")
+
+		row = csql.DB.QueryRow("SELECT username, displayname, isChannel, subscribers, false AS user_subscribed FROM profile WHERE id = (SELECT profile_id FROM comment WHERE comment.id = $1)", commentId)
+	} else {
+		fmt.Println("SELECT username, displayname, isChannel, subscribers, EXISTS(SELECT 1 FROM subscriber_subscribee WHERE subscriber_id = $1 AND subscribee_id = profile.id) AS user_subscribed FROM profile WHERE id = (SELECT profile_id FROM comment WHERE comment.id = $2)")
+		row = csql.DB.QueryRow("SELECT username, displayname, isChannel, subscribers, EXISTS(SELECT 1 FROM subscriber_subscribee WHERE subscriber_id = $1 AND subscribee_id = profile.id) AS user_subscribed FROM profile WHERE id = (SELECT profile_id FROM comment WHERE comment.id = $2)", profileId, commentId)
+
+	}
+
+	profile := model.Profile{}
+
+	err := row.Scan(&profile.Username, &profile.Displayname, &profile.IsChannel, &profile.Subscribers, &profile.UserIsSubscribedTo)
+
+	if err != nil {
+
+		return nil, err
+	}
+
+	return &profile, nil
+
 }

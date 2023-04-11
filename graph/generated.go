@@ -37,6 +37,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Comment() CommentResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Video() VideoResolver
@@ -77,21 +78,24 @@ type ComplexityRoot struct {
 		Login                    func(childComplexity int, login model.LoginInput) int
 		Register                 func(childComplexity int, profileToRegister model.RegisterInput) int
 		Subscribe                func(childComplexity int, subscribee string) int
+		Unsubscribe              func(childComplexity int, subscribee string) int
 		UpsertVideo              func(childComplexity int, input model.VideoInput) int
 		VideoView                func(childComplexity int, videoID string) int
 	}
 
 	Profile struct {
-		Displayname func(childComplexity int) int
-		IsChannel   func(childComplexity int) int
-		Subscribers func(childComplexity int) int
-		Username    func(childComplexity int) int
+		Displayname        func(childComplexity int) int
+		IsChannel          func(childComplexity int) int
+		Subscribers        func(childComplexity int) int
+		UserIsSubscribedTo func(childComplexity int) int
+		Username           func(childComplexity int) int
 	}
 
 	Query struct {
 		GetCommentResponses func(childComplexity int, commentID string) int
 		GetMentions         func(childComplexity int) int
 		GetVideoComments    func(childComplexity int, videoID string) int
+		GetVideoLikeStatus  func(childComplexity int, id string) int
 		Profile             func(childComplexity int, username string) int
 		Profiles            func(childComplexity int, amount int) int
 		Video               func(childComplexity int, id string) int
@@ -129,11 +133,15 @@ type ComplexityRoot struct {
 	}
 }
 
+type CommentResolver interface {
+	Profile(ctx context.Context, obj *model.Comment) (*model.Profile, error)
+}
 type MutationResolver interface {
 	UpsertVideo(ctx context.Context, input model.VideoInput) (*model.Video, error)
 	Login(ctx context.Context, login model.LoginInput) (*model.Profile, error)
 	Register(ctx context.Context, profileToRegister model.RegisterInput) (*model.Profile, error)
 	Subscribe(ctx context.Context, subscribee string) (bool, error)
+	Unsubscribe(ctx context.Context, subscribee string) (bool, error)
 	VideoView(ctx context.Context, videoID string) (bool, error)
 	LikeVideo(ctx context.Context, videoID string) (bool, error)
 	DislikeVideo(ctx context.Context, videoID string) (bool, error)
@@ -147,6 +155,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Videos(ctx context.Context, amount *int) ([]*model.Video, error)
 	Video(ctx context.Context, id string) (*model.Video, error)
+	GetVideoLikeStatus(ctx context.Context, id string) (*model.LikeDislike, error)
 	GetVideoComments(ctx context.Context, videoID string) ([]*model.Comment, error)
 	GetCommentResponses(ctx context.Context, commentID string) ([]*model.Comment, error)
 	Profile(ctx context.Context, username string) (*model.Profile, error)
@@ -385,6 +394,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.Subscribe(childComplexity, args["subscribee"].(string)), true
 
+	case "Mutation.unsubscribe":
+		if e.complexity.Mutation.Unsubscribe == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_unsubscribe_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.Unsubscribe(childComplexity, args["subscribee"].(string)), true
+
 	case "Mutation.upsertVideo":
 		if e.complexity.Mutation.UpsertVideo == nil {
 			break
@@ -430,6 +451,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Profile.Subscribers(childComplexity), true
 
+	case "Profile.userIsSubscribedTo":
+		if e.complexity.Profile.UserIsSubscribedTo == nil {
+			break
+		}
+
+		return e.complexity.Profile.UserIsSubscribedTo(childComplexity), true
+
 	case "Profile.username":
 		if e.complexity.Profile.Username == nil {
 			break
@@ -467,6 +495,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetVideoComments(childComplexity, args["video_id"].(string)), true
+
+	case "Query.getVideoLikeStatus":
+		if e.complexity.Query.GetVideoLikeStatus == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getVideoLikeStatus_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetVideoLikeStatus(childComplexity, args["id"].(string)), true
 
 	case "Query.profile":
 		if e.complexity.Query.Profile == nil {
@@ -907,6 +947,21 @@ func (ec *executionContext) field_Mutation_subscribe_args(ctx context.Context, r
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_unsubscribe_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["subscribee"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subscribee"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["subscribee"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_upsertVideo_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -979,6 +1034,21 @@ func (ec *executionContext) field_Query_getVideoComments_args(ctx context.Contex
 		}
 	}
 	args["video_id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getVideoLikeStatus_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -1253,57 +1323,6 @@ func (ec *executionContext) fieldContext_Comment_video_id(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Comment_Profile(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Comment_Profile(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Profile, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Profile)
-	fc.Result = res
-	return ec.marshalOProfile2ᚖgithubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐProfile(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Comment_Profile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Comment",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "username":
-				return ec.fieldContext_Profile_username(ctx, field)
-			case "displayname":
-				return ec.fieldContext_Profile_displayname(ctx, field)
-			case "isChannel":
-				return ec.fieldContext_Profile_isChannel(ctx, field)
-			case "subscribers":
-				return ec.fieldContext_Profile_subscribers(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Comment_parent_id(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Comment_parent_id(ctx, field)
 	if err != nil {
@@ -1381,6 +1400,59 @@ func (ec *executionContext) fieldContext_Comment_status(ctx context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type LIKE_DISLIKE does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Comment_Profile(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Comment_Profile(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Comment().Profile(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Profile)
+	fc.Result = res
+	return ec.marshalOProfile2ᚖgithubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐProfile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Comment_Profile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Comment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "username":
+				return ec.fieldContext_Profile_username(ctx, field)
+			case "displayname":
+				return ec.fieldContext_Profile_displayname(ctx, field)
+			case "isChannel":
+				return ec.fieldContext_Profile_isChannel(ctx, field)
+			case "subscribers":
+				return ec.fieldContext_Profile_subscribers(ctx, field)
+			case "userIsSubscribedTo":
+				return ec.fieldContext_Profile_userIsSubscribedTo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
 		},
 	}
 	return fc, nil
@@ -1683,6 +1755,8 @@ func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, fie
 				return ec.fieldContext_Profile_isChannel(ctx, field)
 			case "subscribers":
 				return ec.fieldContext_Profile_subscribers(ctx, field)
+			case "userIsSubscribedTo":
+				return ec.fieldContext_Profile_userIsSubscribedTo(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
 		},
@@ -1745,6 +1819,8 @@ func (ec *executionContext) fieldContext_Mutation_register(ctx context.Context, 
 				return ec.fieldContext_Profile_isChannel(ctx, field)
 			case "subscribers":
 				return ec.fieldContext_Profile_subscribers(ctx, field)
+			case "userIsSubscribedTo":
+				return ec.fieldContext_Profile_userIsSubscribedTo(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
 		},
@@ -1832,6 +1908,81 @@ func (ec *executionContext) fieldContext_Mutation_subscribe(ctx context.Context,
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_subscribe_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_unsubscribe(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_unsubscribe(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().Unsubscribe(rctx, fc.Args["subscribee"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Authorize == nil {
+				return nil, errors.New("directive authorize is not implemented")
+			}
+			return ec.directives.Authorize(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_unsubscribe(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_unsubscribe_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -2680,6 +2831,47 @@ func (ec *executionContext) fieldContext_Profile_subscribers(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Profile_userIsSubscribedTo(ctx context.Context, field graphql.CollectedField, obj *model.Profile) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Profile_userIsSubscribedTo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserIsSubscribedTo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Profile_userIsSubscribedTo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_videos(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_videos(ctx, field)
 	if err != nil {
@@ -2767,8 +2959,28 @@ func (ec *executionContext) _Query_video(ctx context.Context, field graphql.Coll
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Video(rctx, fc.Args["id"].(string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().Video(rctx, fc.Args["id"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Authorizeoptional == nil {
+				return nil, errors.New("directive authorizeoptional is not implemented")
+			}
+			return ec.directives.Authorizeoptional(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Video); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github/Martin-Martinez4/metube_backend/graph/model.Video`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2822,6 +3034,78 @@ func (ec *executionContext) fieldContext_Query_video(ctx context.Context, field 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_video_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getVideoLikeStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getVideoLikeStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().GetVideoLikeStatus(rctx, fc.Args["id"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Authorize == nil {
+				return nil, errors.New("directive authorize is not implemented")
+			}
+			return ec.directives.Authorize(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.LikeDislike); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github/Martin-Martinez4/metube_backend/graph/model.LikeDislike`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.LikeDislike)
+	fc.Result = res
+	return ec.marshalOLIKE_DISLIKE2ᚖgithubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐLikeDislike(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getVideoLikeStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type LIKE_DISLIKE does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getVideoLikeStatus_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -2895,12 +3179,12 @@ func (ec *executionContext) fieldContext_Query_getVideoComments(ctx context.Cont
 				return ec.fieldContext_Comment_body(ctx, field)
 			case "video_id":
 				return ec.fieldContext_Comment_video_id(ctx, field)
-			case "Profile":
-				return ec.fieldContext_Comment_Profile(ctx, field)
 			case "parent_id":
 				return ec.fieldContext_Comment_parent_id(ctx, field)
 			case "status":
 				return ec.fieldContext_Comment_status(ctx, field)
+			case "Profile":
+				return ec.fieldContext_Comment_Profile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Comment", field.Name)
 		},
@@ -2986,12 +3270,12 @@ func (ec *executionContext) fieldContext_Query_getCommentResponses(ctx context.C
 				return ec.fieldContext_Comment_body(ctx, field)
 			case "video_id":
 				return ec.fieldContext_Comment_video_id(ctx, field)
-			case "Profile":
-				return ec.fieldContext_Comment_Profile(ctx, field)
 			case "parent_id":
 				return ec.fieldContext_Comment_parent_id(ctx, field)
 			case "status":
 				return ec.fieldContext_Comment_status(ctx, field)
+			case "Profile":
+				return ec.fieldContext_Comment_Profile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Comment", field.Name)
 		},
@@ -3023,8 +3307,28 @@ func (ec *executionContext) _Query_profile(ctx context.Context, field graphql.Co
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Profile(rctx, fc.Args["username"].(string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().Profile(rctx, fc.Args["username"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Authorizeoptional == nil {
+				return nil, errors.New("directive authorizeoptional is not implemented")
+			}
+			return ec.directives.Authorizeoptional(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Profile); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github/Martin-Martinez4/metube_backend/graph/model.Profile`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3054,6 +3358,8 @@ func (ec *executionContext) fieldContext_Query_profile(ctx context.Context, fiel
 				return ec.fieldContext_Profile_isChannel(ctx, field)
 			case "subscribers":
 				return ec.fieldContext_Profile_subscribers(ctx, field)
+			case "userIsSubscribedTo":
+				return ec.fieldContext_Profile_userIsSubscribedTo(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
 		},
@@ -3116,6 +3422,8 @@ func (ec *executionContext) fieldContext_Query_profiles(ctx context.Context, fie
 				return ec.fieldContext_Profile_isChannel(ctx, field)
 			case "subscribers":
 				return ec.fieldContext_Profile_subscribers(ctx, field)
+			case "userIsSubscribedTo":
+				return ec.fieldContext_Profile_userIsSubscribedTo(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
 		},
@@ -3181,12 +3489,12 @@ func (ec *executionContext) fieldContext_Query_getMentions(ctx context.Context, 
 				return ec.fieldContext_Comment_body(ctx, field)
 			case "video_id":
 				return ec.fieldContext_Comment_video_id(ctx, field)
-			case "Profile":
-				return ec.fieldContext_Comment_Profile(ctx, field)
 			case "parent_id":
 				return ec.fieldContext_Comment_parent_id(ctx, field)
 			case "status":
 				return ec.fieldContext_Comment_status(ctx, field)
+			case "Profile":
+				return ec.fieldContext_Comment_Profile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Comment", field.Name)
 		},
@@ -4132,6 +4440,8 @@ func (ec *executionContext) fieldContext_Video_profile(ctx context.Context, fiel
 				return ec.fieldContext_Profile_isChannel(ctx, field)
 			case "subscribers":
 				return ec.fieldContext_Profile_subscribers(ctx, field)
+			case "userIsSubscribedTo":
+				return ec.fieldContext_Profile_userIsSubscribedTo(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
 		},
@@ -6095,29 +6405,25 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Comment_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "datePosted":
 
 			out.Values[i] = ec._Comment_datePosted(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "body":
 
 			out.Values[i] = ec._Comment_body(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "video_id":
 
 			out.Values[i] = ec._Comment_video_id(ctx, field, obj)
-
-		case "Profile":
-
-			out.Values[i] = ec._Comment_Profile(ctx, field, obj)
 
 		case "parent_id":
 
@@ -6127,6 +6433,23 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 
 			out.Values[i] = ec._Comment_status(ctx, field, obj)
 
+		case "Profile":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Comment_Profile(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6231,6 +6554,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_subscribe(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "unsubscribe":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_unsubscribe(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
@@ -6357,6 +6689,10 @@ func (ec *executionContext) _Profile(ctx context.Context, sel ast.SelectionSet, 
 
 			out.Values[i] = ec._Profile_subscribers(ctx, field, obj)
 
+		case "userIsSubscribedTo":
+
+			out.Values[i] = ec._Profile_userIsSubscribedTo(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6417,6 +6753,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_video(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "getVideoLikeStatus":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getVideoLikeStatus(ctx, field)
 				return res
 			}
 

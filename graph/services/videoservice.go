@@ -1,17 +1,20 @@
 package services
 
 import (
+	"context"
 	"database/sql"
 	"github/Martin-Martinez4/metube_backend/graph/model"
+	"github/Martin-Martinez4/metube_backend/utils"
 )
 
 type VideoService interface {
 	GetVideoById(id string) (*model.Video, error)
+	GetVideoLikeStatus(ctx context.Context, id string) (*model.LikeDislike, error)
 	GetContentInformation(id string) (*model.ContentInformation, error)
 	GetThumbnail(id string) (*model.Thumbnail, error)
 	GetStatistic(id string) (*model.Statistic, error)
 	GetStatus(id string) (*model.Status, error)
-	GetProfile(id string) (*model.Profile, error)
+	GetProfile(ctx context.Context, id string) (*model.Profile, error)
 	GetMultipleVideos(amount int) ([]*model.Video, error)
 }
 
@@ -31,6 +34,29 @@ func (vsql *VideoServiceSQL) GetVideoById(id string) (*model.Video, error) {
 	}
 
 	return &video, nil
+}
+
+func (vsql *VideoServiceSQL) GetVideoLikeStatus(ctx context.Context, id string) (*model.LikeDislike, error) {
+
+	profileId := ctx.Value(utils.UserKey)
+
+	row := vsql.DB.QueryRow("SELECT status FROM profile_video_like_dislike WHERE profile_id = $1 AND video_id = $2", profileId, id)
+
+	var status *model.LikeDislike
+
+	err := row.Scan(&status)
+
+	if err == sql.ErrNoRows {
+
+		return nil, nil
+	}
+
+	if err != nil {
+
+		return nil, err
+	}
+
+	return status, nil
 }
 
 func (vsql *VideoServiceSQL) GetMultipleVideos(amount int) ([]*model.Video, error) {
@@ -111,12 +137,22 @@ func (vsql *VideoServiceSQL) GetStatus(id string) (*model.Status, error) {
 	return &status, nil
 }
 
-func (vsql *VideoServiceSQL) GetProfile(id string) (*model.Profile, error) {
-	row := vsql.DB.QueryRow("SELECT username, displayname, isChannel, subscribers FROM profile WHERE id = $1", id)
+func (vsql *VideoServiceSQL) GetProfile(ctx context.Context, id string) (*model.Profile, error) {
+
+	profileId := ctx.Value(utils.UserKey)
+
+	var row *sql.Row
+
+	if profileId == nil {
+		row = vsql.DB.QueryRow("SELECT username, displayname, isChannel, subscribers, false AS user_subscribed FROM profile WHERE id = $1", id)
+	} else {
+
+		row = vsql.DB.QueryRow("SELECT username, displayname, isChannel, subscribers, EXISTS(SELECT 1 FROM subscriber_subscribee WHERE subscriber_id = $1 AND subscribee_id = profile.id) AS user_subscribed FROM profile WHERE id = $2", profileId, id)
+	}
 
 	profile := model.Profile{}
 
-	err := row.Scan(&profile.Username, &profile.Displayname, &profile.IsChannel, &profile.Subscribers)
+	err := row.Scan(&profile.Username, &profile.Displayname, &profile.IsChannel, &profile.Subscribers, &profile.UserIsSubscribedTo)
 	if err != nil {
 		return nil, err
 	}

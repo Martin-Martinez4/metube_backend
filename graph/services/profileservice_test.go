@@ -101,7 +101,10 @@ func TestProfileServiceSQL_GetProfileByUsername(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.psql.GetProfileByUsername(tt.args.username)
+
+			ctx := helpers.MyContext{}
+
+			got, err := tt.psql.GetProfileByUsername(ctx, tt.args.username)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProfileServiceSQL.GetProfileByUsername() error = %v, wantErr %v", err, tt.wantErr)
 				return

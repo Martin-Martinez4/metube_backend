@@ -25,7 +25,6 @@ func GetVars() *envVars {
 	}
 
 	println(os.Getenv("DB_URL"))
-	println("here")
 
 	toReturn = &envVars{
 		DB_URL:     os.Getenv("DB_URL"),
