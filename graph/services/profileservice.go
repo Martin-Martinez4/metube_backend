@@ -170,12 +170,12 @@ func (psql *ProfileServiceSQL) LikeVideo(ctx context.Context, videoID string) (b
 
 		if currentStatus == "dislike" {
 
-			_, err = tx.ExecContext(ctx, "UPDATE statistic SET dislikes = dislikes - 1, likes = likes + 1")
+			_, err = tx.ExecContext(ctx, "UPDATE statistic SET dislikes = dislikes - 1, likes = likes + 1 WHERE video_id = $1", videoID)
 			if err != nil {
 				return false, err
 			}
 		} else {
-			_, err = tx.ExecContext(ctx, "UPDATE statistic SET likes = likes + 1")
+			_, err = tx.ExecContext(ctx, "UPDATE statistic SET likes = likes + 1 WHERE video_id = $1", videoID)
 			if err != nil {
 				return false, err
 			}
@@ -225,13 +225,13 @@ func (psql *ProfileServiceSQL) DislikeVideo(ctx context.Context, videoID string)
 
 		if currentStatus == "like" {
 
-			_, err = tx.ExecContext(ctx, "UPDATE statistic SET likes = likes - 1, dislikes = dislikes + 1")
+			_, err = tx.ExecContext(ctx, "UPDATE statistic SET likes = likes - 1, dislikes = dislikes + 1 WHERE video_id = $1", videoID)
 			if err != nil {
 				return false, err
 			}
 		} else {
 
-			_, err = tx.ExecContext(ctx, "UPDATE statistic SET dislikes = dislikes + 1")
+			_, err = tx.ExecContext(ctx, "UPDATE statistic SET dislikes = dislikes + 1 WHERE video_id = $1", videoID)
 			if err != nil {
 				return false, err
 			}

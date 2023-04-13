@@ -52,9 +52,12 @@ type ComplexityRoot struct {
 	Comment struct {
 		Body       func(childComplexity int) int
 		DatePosted func(childComplexity int) int
+		Dislikes   func(childComplexity int) int
 		ID         func(childComplexity int) int
+		Likes      func(childComplexity int) int
 		ParentID   func(childComplexity int) int
 		Profile    func(childComplexity int) int
+		Responses  func(childComplexity int) int
 		Status     func(childComplexity int) int
 		VideoID    func(childComplexity int) int
 	}
@@ -199,12 +202,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Comment.DatePosted(childComplexity), true
 
+	case "Comment.dislikes":
+		if e.complexity.Comment.Dislikes == nil {
+			break
+		}
+
+		return e.complexity.Comment.Dislikes(childComplexity), true
+
 	case "Comment.id":
 		if e.complexity.Comment.ID == nil {
 			break
 		}
 
 		return e.complexity.Comment.ID(childComplexity), true
+
+	case "Comment.likes":
+		if e.complexity.Comment.Likes == nil {
+			break
+		}
+
+		return e.complexity.Comment.Likes(childComplexity), true
 
 	case "Comment.parent_id":
 		if e.complexity.Comment.ParentID == nil {
@@ -219,6 +236,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Comment.Profile(childComplexity), true
+
+	case "Comment.responses":
+		if e.complexity.Comment.Responses == nil {
+			break
+		}
+
+		return e.complexity.Comment.Responses(childComplexity), true
 
 	case "Comment.status":
 		if e.complexity.Comment.Status == nil {
@@ -1359,6 +1383,138 @@ func (ec *executionContext) fieldContext_Comment_parent_id(ctx context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Comment_likes(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Comment_likes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Likes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Comment_likes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Comment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Comment_dislikes(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Comment_dislikes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Dislikes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Comment_dislikes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Comment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Comment_responses(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Comment_responses(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Responses, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Comment_responses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Comment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3181,6 +3337,12 @@ func (ec *executionContext) fieldContext_Query_getVideoComments(ctx context.Cont
 				return ec.fieldContext_Comment_video_id(ctx, field)
 			case "parent_id":
 				return ec.fieldContext_Comment_parent_id(ctx, field)
+			case "likes":
+				return ec.fieldContext_Comment_likes(ctx, field)
+			case "dislikes":
+				return ec.fieldContext_Comment_dislikes(ctx, field)
+			case "responses":
+				return ec.fieldContext_Comment_responses(ctx, field)
 			case "status":
 				return ec.fieldContext_Comment_status(ctx, field)
 			case "Profile":
@@ -3272,6 +3434,12 @@ func (ec *executionContext) fieldContext_Query_getCommentResponses(ctx context.C
 				return ec.fieldContext_Comment_video_id(ctx, field)
 			case "parent_id":
 				return ec.fieldContext_Comment_parent_id(ctx, field)
+			case "likes":
+				return ec.fieldContext_Comment_likes(ctx, field)
+			case "dislikes":
+				return ec.fieldContext_Comment_dislikes(ctx, field)
+			case "responses":
+				return ec.fieldContext_Comment_responses(ctx, field)
 			case "status":
 				return ec.fieldContext_Comment_status(ctx, field)
 			case "Profile":
@@ -3491,6 +3659,12 @@ func (ec *executionContext) fieldContext_Query_getMentions(ctx context.Context, 
 				return ec.fieldContext_Comment_video_id(ctx, field)
 			case "parent_id":
 				return ec.fieldContext_Comment_parent_id(ctx, field)
+			case "likes":
+				return ec.fieldContext_Comment_likes(ctx, field)
+			case "dislikes":
+				return ec.fieldContext_Comment_dislikes(ctx, field)
+			case "responses":
+				return ec.fieldContext_Comment_responses(ctx, field)
 			case "status":
 				return ec.fieldContext_Comment_status(ctx, field)
 			case "Profile":
@@ -6429,6 +6603,27 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 
 			out.Values[i] = ec._Comment_parent_id(ctx, field, obj)
 
+		case "likes":
+
+			out.Values[i] = ec._Comment_likes(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "dislikes":
+
+			out.Values[i] = ec._Comment_dislikes(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "responses":
+
+			out.Values[i] = ec._Comment_responses(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "status":
 
 			out.Values[i] = ec._Comment_status(ctx, field, obj)

@@ -10,6 +10,21 @@ import (
 	"github/Martin-Martinez4/metube_backend/graph/model"
 )
 
+// Likes is the resolver for the likes field.
+func (r *commentResolver) Likes(ctx context.Context, obj *model.Comment) (int, error) {
+	panic(fmt.Errorf("not implemented: Likes - likes"))
+}
+
+// Dislikes is the resolver for the dislikes field.
+func (r *commentResolver) Dislikes(ctx context.Context, obj *model.Comment) (int, error) {
+	panic(fmt.Errorf("not implemented: Dislikes - dislikes"))
+}
+
+// Responses is the resolver for the responses field.
+func (r *commentResolver) Responses(ctx context.Context, obj *model.Comment) (int, error) {
+	panic(fmt.Errorf("not implemented: Responses - responses"))
+}
+
 // Profile is the resolver for the Profile field.
 func (r *commentResolver) Profile(ctx context.Context, obj *model.Comment) (*model.Profile, error) {
 	// return r.CommentService.GetProfile(ctx, obj.ID)

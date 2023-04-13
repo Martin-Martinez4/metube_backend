@@ -36,12 +36,50 @@ func (csql *CommentServiceSQL) LikeComment(ctx context.Context, commentID string
 		return false, errors.New("token is nil")
 	}
 
-	_, err := csql.DB.Exec("INSERT INTO profile_comment_like_dislike(profile_id, comment_id, status) VALUES($1, $2, 'like') ON CONFLICT (profile_id, comment_id) DO UPDATE SET status = 'like'", likerId, commentID)
+	tx, err := csql.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return false, err
 	}
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
 
-	return true, nil
+	row := tx.QueryRow("SELECT status FROM profile_comment_like_dislike WHERE profile_id = $1 AND comment_id = $2", likerId, commentID)
+	var currentStatus string
+
+	err = row.Scan(&currentStatus)
+	if err != nil && err != sql.ErrNoRows {
+
+		return false, err
+	}
+
+	if currentStatus != "like" {
+
+		_, err = tx.ExecContext(ctx, "INSERT INTO profile_comment_like_dislike(profile_id, comment_id, status) VALUES($1, $2, 'like') ON CONFLICT (profile_id, comment_id) DO UPDATE SET status = 'like'", likerId, commentID)
+		if err != nil {
+			return false, err
+		}
+		if currentStatus == "dislike" {
+
+			// _, err = tx.ExecContext(ctx, "UPDATE comment SET likes = likes + 1, dislikes = dislikes - 1 WHERE id = $1", commentID)
+			_, err = tx.ExecContext(ctx, "UPDATE comment SET likes = likes + 1, dislikes = CASE WHEN dislikes - 1 < 0 THEN 0 ELSE dislikes - 1 END  WHERE id = $1", commentID)
+			if err != nil {
+				return false, err
+			}
+		} else {
+
+			_, err = tx.ExecContext(ctx, "UPDATE comment SET likes = likes + 1 WHERE id = $1", commentID)
+			if err != nil {
+				return false, err
+			}
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return false, err
+	} else {
+
+		return true, nil
+	}
 }
 
 func (csql *CommentServiceSQL) DislikeComment(ctx context.Context, commentID string) (bool, error) {
@@ -51,12 +89,50 @@ func (csql *CommentServiceSQL) DislikeComment(ctx context.Context, commentID str
 		return false, errors.New("token is nil")
 	}
 
-	_, err := csql.DB.Exec("INSERT INTO profile_comment_like_dislike(profile_id, comment_id, status) VALUES($1, $2, 'dislike') ON CONFLICT (profile_id, comment_id) DO UPDATE SET status = 'dislike'", dislikerId, commentID)
+	tx, err := csql.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return false, err
 	}
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
 
-	return true, nil
+	row := tx.QueryRow("SELECT status FROM profile_comment_like_dislike WHERE profile_id = $1 AND comment_id = $2", dislikerId, commentID)
+	var currentStatus string
+
+	err = row.Scan(&currentStatus)
+	if err != nil && err != sql.ErrNoRows {
+
+		return false, err
+	}
+
+	if currentStatus != "dislike" {
+
+		_, err = tx.ExecContext(ctx, "INSERT INTO profile_comment_like_dislike(profile_id, comment_id, status) VALUES($1, $2, 'dislike') ON CONFLICT (profile_id, comment_id) DO UPDATE SET status = 'dislike'", dislikerId, commentID)
+		if err != nil {
+			return false, err
+		}
+
+		if currentStatus == "like" {
+
+			_, err = tx.ExecContext(ctx, "UPDATE comment SET likes = CASE WHEN likes - 1 < 0 THEN 0 ELSE likes - 1 END, dislikes = dislikes + 1 WHERE id = $1", commentID)
+			if err != nil {
+				return false, err
+			}
+		} else {
+
+			_, err = tx.ExecContext(ctx, "UPDATE comment SET dislikes = dislikes + 1 WHERE id = $1", commentID)
+			if err != nil {
+				return false, err
+			}
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return false, err
+	} else {
+
+		return true, nil
+	}
 
 }
 
@@ -94,7 +170,7 @@ func (csql *CommentServiceSQL) CreateComment(ctx context.Context, comment model.
 	// Defer a rollback in case anything fails.
 	defer tx.Rollback()
 
-	row := tx.QueryRowContext(ctx, "INSERT INTO comment(id, date_posted, body, video_id, profile_id) VALUES (uuid_generate_v4(), now()::TIMESTAMPTZ, $1, $2, $3) RETURNING id", comment.Body, comment.VideoID, commentorId)
+	row := tx.QueryRowContext(ctx, "INSERT INTO comment(id, date_posted, body, video_id, profile_id, likes, dislikes, responses) VALUES (uuid_generate_v4(), now()::TIMESTAMPTZ, $1, $2, $3, 0, 0, 0) RETURNING id", comment.Body, comment.VideoID, commentorId)
 	if err != nil {
 		return false, errors.New("inset comment failed")
 	}
@@ -162,7 +238,7 @@ func (csql *CommentServiceSQL) CreateResponse(ctx context.Context, comment model
 	// Defer a rollback in case anything fails.
 	defer tx.Rollback()
 
-	row := tx.QueryRowContext(ctx, "INSERT INTO comment(id, date_posted, body, video_id, profile_id, parent_comment) VALUES (uuid_generate_v4(), now()::TIMESTAMPTZ, $1, $2, $3, $4) RETURNING id", comment.Body, comment.VideoID, commentorId, parentCommentID)
+	row := tx.QueryRowContext(ctx, "INSERT INTO comment(id, date_posted, body, video_id, profile_id, parent_comment, likes, dislikes, responses) VALUES (uuid_generate_v4(), now()::TIMESTAMPTZ, $1, $2, $3, $4, 0, 0, 0) RETURNING id", comment.Body, comment.VideoID, commentorId, parentCommentID)
 	if err != nil {
 		return false, errors.New("inset comment failed " + err.Error())
 	}
@@ -215,17 +291,17 @@ func (csql *CommentServiceSQL) GetVideoComments(ctx context.Context, videoID str
 
 	if profileId != nil {
 
-		fmt.Println("SELECT id, date_posted, body, parent_comment, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE video_id = $2")
+		fmt.Println("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE video_id = $2")
 
-		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE video_id = $2", profileId, videoID)
+		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE video_id = $2", profileId, videoID)
 		if err != nil {
 			return nil, err
 		}
 
 	} else {
 
-		fmt.Println("SELECT id, date_posted, body, parent_comment, NULL AS status FROM comment WHERE video_id = $1")
-		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, NULL AS status FROM comment WHERE video_id = $1", videoID)
+		fmt.Println("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, NULL AS status FROM comment WHERE video_id = $1")
+		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, NULL AS status FROM comment WHERE video_id = $1", videoID)
 		if err != nil {
 			return nil, err
 		}
@@ -238,7 +314,7 @@ func (csql *CommentServiceSQL) GetVideoComments(ctx context.Context, videoID str
 
 		comment := model.Comment{}
 
-		err := rows.Scan(&comment.ID, &comment.DatePosted, &comment.Body, &comment.ParentID, &comment.Status)
+		err := rows.Scan(&comment.ID, &comment.DatePosted, &comment.Body, &comment.ParentID, &comment.Likes, &comment.Dislikes, &comment.Responses, &comment.Status)
 		if err != nil {
 			return nil, err
 		}

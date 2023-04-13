@@ -67,13 +67,16 @@ type ContentInformation{
 }
 
 type Comment{
-  id: ID!,
-  datePosted: String!,
-  body: String!,
-  video_id: String,
-  parent_id: String,
+  id: ID!
+  datePosted: String!
+  body: String!
+  video_id: String
+  parent_id: String
+  likes: Int!
+  dislikes: Int!
+  responses: Int!
   status: LIKE_DISLIKE
-  Profile: Profile,
+  Profile: Profile
 }
 
 type Profile{
