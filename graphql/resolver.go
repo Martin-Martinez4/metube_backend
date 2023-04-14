@@ -76,7 +76,7 @@ func (r *mutationResolver) DeleteLikeDislikeVideo(ctx context.Context, videoID s
 }
 
 // // foo
-func (r *mutationResolver) CreateComment(ctx context.Context, comment model.CommentInput) (bool, error) {
+func (r *mutationResolver) CreateComment(ctx context.Context, comment model.CommentInput) (*model.Comment, error) {
 	panic("not implemented")
 }
 

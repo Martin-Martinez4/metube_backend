@@ -88,7 +88,7 @@ func (r *mutationResolver) DeleteLikeDislikeVideo(ctx context.Context, videoID s
 }
 
 // CreateComment is the resolver for the createComment field.
-func (r *mutationResolver) CreateComment(ctx context.Context, comment model.CommentInput) (bool, error) {
+func (r *mutationResolver) CreateComment(ctx context.Context, comment model.CommentInput) (*model.Comment, error) {
 	return r.CommentService.CreateComment(ctx, comment)
 }
 

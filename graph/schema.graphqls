@@ -1,7 +1,7 @@
 # GraphQL schema example
 #
 # https://gqlgen.com/getting-started/
-# To run generation go run github.com/99designs/gqlgen generate
+# To run generation: go run github.com/99designs/gqlgen generate
 
 # Each line is a new potential query
 # (id:ID!) ! means the id is required
@@ -34,7 +34,7 @@ type Mutation{
   dislikeVideo(video_id: String!): Boolean! @authorize
   deleteLikeDislikeVideo(video_id: String!): Boolean! @authorize
 
-  createComment(comment: CommentInput!): Boolean! @authorize
+  createComment(comment: CommentInput!): Comment! @authorize
   createResponse(comment: CommentInput!, parent_comment_id: String!): Boolean! @authorize
   likeComment(comment_id: String!): Boolean! @authorize
   dislikeComment(comment_id: String!): Boolean! @authorize

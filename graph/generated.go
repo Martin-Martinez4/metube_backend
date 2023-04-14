@@ -149,7 +149,7 @@ type MutationResolver interface {
 	LikeVideo(ctx context.Context, videoID string) (bool, error)
 	DislikeVideo(ctx context.Context, videoID string) (bool, error)
 	DeleteLikeDislikeVideo(ctx context.Context, videoID string) (bool, error)
-	CreateComment(ctx context.Context, comment model.CommentInput) (bool, error)
+	CreateComment(ctx context.Context, comment model.CommentInput) (*model.Comment, error)
 	CreateResponse(ctx context.Context, comment model.CommentInput, parentCommentID string) (bool, error)
 	LikeComment(ctx context.Context, commentID string) (bool, error)
 	DislikeComment(ctx context.Context, commentID string) (bool, error)
@@ -2476,10 +2476,10 @@ func (ec *executionContext) _Mutation_createComment(ctx context.Context, field g
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(bool); ok {
+		if data, ok := tmp.(*model.Comment); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github/Martin-Martinez4/metube_backend/graph/model.Comment`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2491,9 +2491,9 @@ func (ec *executionContext) _Mutation_createComment(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*model.Comment)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNComment2ᚖgithubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2503,7 +2503,29 @@ func (ec *executionContext) fieldContext_Mutation_createComment(ctx context.Cont
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Comment_id(ctx, field)
+			case "datePosted":
+				return ec.fieldContext_Comment_datePosted(ctx, field)
+			case "body":
+				return ec.fieldContext_Comment_body(ctx, field)
+			case "video_id":
+				return ec.fieldContext_Comment_video_id(ctx, field)
+			case "parent_id":
+				return ec.fieldContext_Comment_parent_id(ctx, field)
+			case "likes":
+				return ec.fieldContext_Comment_likes(ctx, field)
+			case "dislikes":
+				return ec.fieldContext_Comment_dislikes(ctx, field)
+			case "responses":
+				return ec.fieldContext_Comment_responses(ctx, field)
+			case "status":
+				return ec.fieldContext_Comment_status(ctx, field)
+			case "Profile":
+				return ec.fieldContext_Comment_Profile(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Comment", field.Name)
 		},
 	}
 	defer func() {
@@ -7700,6 +7722,10 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNComment2githubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v model.Comment) graphql.Marshaler {
+	return ec._Comment(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNComment2ᚕᚖgithubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v []*model.Comment) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -7736,6 +7762,16 @@ func (ec *executionContext) marshalNComment2ᚕᚖgithubᚋMartinᚑMartinez4ᚋ
 	wg.Wait()
 
 	return ret
+}
+
+func (ec *executionContext) marshalNComment2ᚖgithubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v *model.Comment) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Comment(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCommentInput2githubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐCommentInput(ctx context.Context, v interface{}) (model.CommentInput, error) {

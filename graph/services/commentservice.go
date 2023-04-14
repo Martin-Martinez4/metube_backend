@@ -17,7 +17,7 @@ type CommentService interface {
 	DislikeComment(ctx context.Context, commentID string) (bool, error)
 	DeleteLikeDislikeComment(ctx context.Context, commentID string) (bool, error)
 
-	CreateComment(ctx context.Context, comment model.CommentInput) (bool, error)
+	CreateComment(ctx context.Context, comment model.CommentInput) (*model.Comment, error)
 	CreateResponse(ctx context.Context, comment model.CommentInput, parentCommentID string) (bool, error)
 
 	GetVideoComments(ctx context.Context, videoID string) ([]*model.Comment, error)
@@ -152,11 +152,11 @@ func (csql *CommentServiceSQL) DeleteLikeDislikeComment(ctx context.Context, com
 
 }
 
-func (csql *CommentServiceSQL) CreateComment(ctx context.Context, comment model.CommentInput) (bool, error) {
+func (csql *CommentServiceSQL) CreateComment(ctx context.Context, comment model.CommentInput) (*model.Comment, error) {
 
 	commentorId := ctx.Value(utils.UserKey)
 	if commentorId == nil {
-		return false, errors.New("token is nil")
+		return nil, errors.New("token is nil")
 	}
 
 	fail := func(err error) error {
@@ -165,19 +165,23 @@ func (csql *CommentServiceSQL) CreateComment(ctx context.Context, comment model.
 
 	tx, err := csql.DB.BeginTx(ctx, nil)
 	if err != nil {
-		return false, fail(err)
+		return nil, fail(err)
 	}
 	// Defer a rollback in case anything fails.
 	defer tx.Rollback()
 
-	row := tx.QueryRowContext(ctx, "INSERT INTO comment(id, date_posted, body, video_id, profile_id, likes, dislikes, responses) VALUES (uuid_generate_v4(), now()::TIMESTAMPTZ, $1, $2, $3, 0, 0, 0) RETURNING id", comment.Body, comment.VideoID, commentorId)
+	// INSERT INTO comment(id, date_posted, body, video_id, profile_id, likes, dislikes, responses) VALUES (uuid_generate_v4(), now()::TIMESTAMPTZ, "test comment", '75f665c6-0aa4-4463-bb57-854c66c9bed8', ' 6adbb5ec-13c3-46c8-9b94-3c9f2cf1a660', 0, 0, 0) RETURNING id, date_posted, body, video_id, profile_id, likes, dislikes, responses
+
+	row := tx.QueryRowContext(ctx, "INSERT INTO comment(id, date_posted, body, video_id, profile_id, likes, dislikes, responses) VALUES (uuid_generate_v4(), now()::TIMESTAMPTZ, $1, $2, $3, 0, 0, 0) RETURNING id, date_posted, body, video_id, likes, dislikes, responses", comment.Body, comment.VideoID, commentorId)
 	if err != nil {
-		return false, errors.New("inset comment failed")
+		return nil, errors.New("inset comment failed")
 	}
 
-	var commentId string
-
-	row.Scan(&commentId)
+	var commentToReturn = model.Comment{}
+	err = row.Scan(&commentToReturn.ID, &commentToReturn.DatePosted, &commentToReturn.Body, &commentToReturn.VideoID, &commentToReturn.Likes, &commentToReturn.Dislikes, &commentToReturn.Responses)
+	if err != nil {
+		return nil, err
+	}
 
 	valueStrings := []string{}
 	valueArgs := []any{}
@@ -191,14 +195,14 @@ func (csql *CommentServiceSQL) CreateComment(ctx context.Context, comment model.
 
 		for _, mention := range mentions {
 			valueStrings = append(valueStrings, fmt.Sprintf("$%d", i+2))
-			valueArgs = append(valueArgs, fmt.Sprintf("%s", string(mention[1:])))
+			valueArgs = append(valueArgs, string(mention[1:]))
 			i++
 
 		}
 
 		stmt := fmt.Sprintf("INSERT INTO profile_comment_mention(comment_id, profile_id) SELECT $1, id FROM profile WHERE username IN (%s)", strings.Join(valueStrings, ","))
 
-		valueArgs = append([]any{commentId}, valueArgs...)
+		valueArgs = append([]any{commentToReturn.ID}, valueArgs...)
 		for _, value := range valueArgs {
 
 			fmt.Printf("%v \n", value)
@@ -206,15 +210,15 @@ func (csql *CommentServiceSQL) CreateComment(ctx context.Context, comment model.
 
 		_, err = tx.ExecContext(ctx, stmt, valueArgs...)
 		if err != nil {
-			return false, err
+			return nil, err
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
-		return false, fail(err)
+		return nil, fail(err)
 	}
 
-	return true, nil
+	return &commentToReturn, nil
 
 }
 
