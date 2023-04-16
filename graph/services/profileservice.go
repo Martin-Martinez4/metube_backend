@@ -128,12 +128,29 @@ func (psql *ProfileServiceSQL) VideoView(ctx context.Context, videoID string) (b
 		return false, errors.New("token is nil")
 	}
 
-	_, err := psql.DB.Exec("INSERT INTO profile_view(profile_id, video_id) VALUES($1, $2) ON CONFLICT DO NOTHING", viewerId, videoID)
+	tx, err := psql.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return false, err
+	}
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	_, err = tx.Exec("INSERT INTO profile_view(profile_id, video_id) VALUES($1, $2) ON CONFLICT DO NOTHING", viewerId, videoID)
 	if err != nil {
 		return false, err
 	}
 
-	return true, nil
+	_, err = tx.Exec("UPDATE video SET views = views + 1 WHERE id = $1", videoID)
+	if err != nil {
+		return false, err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return false, err
+	} else {
+
+		return true, nil
+	}
 
 }
 

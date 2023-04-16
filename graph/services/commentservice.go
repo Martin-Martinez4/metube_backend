@@ -183,6 +183,11 @@ func (csql *CommentServiceSQL) CreateComment(ctx context.Context, comment model.
 		return nil, err
 	}
 
+	_, err = tx.ExecContext(ctx, "UPDATE statistic SET comments = comments + 1 WHERE video_id = $1", comment.VideoID)
+	if err != nil {
+		return nil, err
+	}
+
 	valueStrings := []string{}
 	valueArgs := []any{}
 	i := 0
@@ -297,7 +302,7 @@ func (csql *CommentServiceSQL) GetVideoComments(ctx context.Context, videoID str
 
 		fmt.Println("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE video_id = $2")
 
-		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE video_id = $2", profileId, videoID)
+		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE video_id = $2 ORDER BY date_posted DESC", profileId, videoID)
 		if err != nil {
 			return nil, err
 		}
@@ -305,7 +310,7 @@ func (csql *CommentServiceSQL) GetVideoComments(ctx context.Context, videoID str
 	} else {
 
 		fmt.Println("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, NULL AS status FROM comment WHERE video_id = $1")
-		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, NULL AS status FROM comment WHERE video_id = $1", videoID)
+		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, NULL AS status FROM comment WHERE video_id = $1 ORDER BY date_posted DESC", videoID)
 		if err != nil {
 			return nil, err
 		}
