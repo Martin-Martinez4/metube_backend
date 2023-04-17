@@ -29,7 +29,7 @@ type Mutation{
 
   subscribe(subscribee: String!): Boolean! @authorize
   unsubscribe(subscribee: String!): Boolean! @authorize
-  videoView(video_id: String!) :Boolean! @authorize
+  videoView(video_id: String!) :Boolean! @authorizeoptional
   likeVideo(video_id: String!): Boolean! @authorize
   dislikeVideo(video_id: String!): Boolean! @authorize
   deleteLikeDislikeVideo(video_id: String!): Boolean! @authorize

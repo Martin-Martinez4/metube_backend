@@ -2163,10 +2163,10 @@ func (ec *executionContext) _Mutation_videoView(ctx context.Context, field graph
 			return ec.resolvers.Mutation().VideoView(rctx, fc.Args["video_id"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.Authorize == nil {
-				return nil, errors.New("directive authorize is not implemented")
+			if ec.directives.Authorizeoptional == nil {
+				return nil, errors.New("directive authorizeoptional is not implemented")
 			}
-			return ec.directives.Authorize(ctx, nil, directive0)
+			return ec.directives.Authorizeoptional(ctx, nil, directive0)
 		}
 
 		tmp, err := directive1(rctx)

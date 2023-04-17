@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/flate"
 	db "github/Martin-Martinez4/metube_backend/config"
 	"github/Martin-Martinez4/metube_backend/graph"
 	directives "github/Martin-Martinez4/metube_backend/graph/directives"
@@ -14,6 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 )
@@ -35,6 +37,10 @@ func main() {
 	DB_URL := os.Getenv("DB_URL")
 
 	r := chi.NewRouter()
+
+	r.Use(middleware.Logger)
+	compressor := middleware.NewCompressor(flate.DefaultCompression)
+	r.Use(compressor.Handler)
 
 	r.Use(cors.Handler(cors.Options{
 		AllowOriginFunc:  AllowOriginFunc,

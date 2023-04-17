@@ -124,9 +124,6 @@ func (psql *ProfileServiceSQL) Unsubscribe(ctx context.Context, subscribee strin
 func (psql *ProfileServiceSQL) VideoView(ctx context.Context, videoID string) (bool, error) {
 
 	viewerId := ctx.Value(utils.UserKey)
-	if viewerId == nil {
-		return false, errors.New("token is nil")
-	}
 
 	tx, err := psql.DB.BeginTx(ctx, nil)
 	if err != nil {
@@ -135,12 +132,15 @@ func (psql *ProfileServiceSQL) VideoView(ctx context.Context, videoID string) (b
 	// Defer a rollback in case anything fails.
 	defer tx.Rollback()
 
-	_, err = tx.Exec("INSERT INTO profile_view(profile_id, video_id) VALUES($1, $2) ON CONFLICT DO NOTHING", viewerId, videoID)
-	if err != nil {
-		return false, err
+	if viewerId != nil {
+
+		_, err = tx.Exec("INSERT INTO profile_view(profile_id, video_id) VALUES($1, $2) ON CONFLICT DO NOTHING", viewerId, videoID)
+		if err != nil {
+			return false, err
+		}
 	}
 
-	_, err = tx.Exec("UPDATE video SET views = views + 1 WHERE id = $1", videoID)
+	_, err = tx.Exec("UPDATE statistic SET views = views + 1 WHERE video_id = $1", videoID)
 	if err != nil {
 		return false, err
 	}
