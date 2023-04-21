@@ -78,6 +78,11 @@ func AuthorizationOptional(ctx context.Context, obj interface{}, next graphql.Re
 		return next(ctx)
 	}
 
+	if claims.StandardClaims.ExpiresAt < time.Now().UnixMilli() {
+
+		return nil, errors.New("token has expired")
+	}
+
 	idFromClaims := claims.Id
 	if idFromClaims == "" {
 		return next(ctx)
