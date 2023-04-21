@@ -35,7 +35,7 @@ type Mutation{
   deleteLikeDislikeVideo(video_id: String!): Boolean! @authorize
 
   createComment(comment: CommentInput!): Comment! @authorize
-  createResponse(comment: CommentInput!, parent_comment_id: String!): Boolean! @authorize
+  createResponse(comment: CommentInput!, parent_comment_id: String!): Comment! @authorize
   likeComment(comment_id: String!): Boolean! @authorize
   dislikeComment(comment_id: String!): Boolean! @authorize
   deleteLikeDislikeComment(comment_id: String!): Boolean! @authorize

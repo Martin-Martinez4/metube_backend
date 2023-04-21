@@ -93,7 +93,7 @@ func (r *mutationResolver) CreateComment(ctx context.Context, comment model.Comm
 }
 
 // CreateResponse is the resolver for the createResponse field.
-func (r *mutationResolver) CreateResponse(ctx context.Context, comment model.CommentInput, parentCommentID string) (bool, error) {
+func (r *mutationResolver) CreateResponse(ctx context.Context, comment model.CommentInput, parentCommentID string) (*model.Comment, error) {
 	return r.CommentService.CreateResponse(ctx, comment, parentCommentID)
 }
 

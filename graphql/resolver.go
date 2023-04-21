@@ -81,7 +81,7 @@ func (r *mutationResolver) CreateComment(ctx context.Context, comment model.Comm
 }
 
 // // foo
-func (r *mutationResolver) CreateResponse(ctx context.Context, comment model.CommentInput, parentCommentID string) (bool, error) {
+func (r *mutationResolver) CreateResponse(ctx context.Context, comment model.CommentInput, parentCommentID string) (*model.Comment, error) {
 	panic("not implemented")
 }
 

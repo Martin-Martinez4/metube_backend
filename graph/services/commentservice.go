@@ -18,7 +18,7 @@ type CommentService interface {
 	DeleteLikeDislikeComment(ctx context.Context, commentID string) (bool, error)
 
 	CreateComment(ctx context.Context, comment model.CommentInput) (*model.Comment, error)
-	CreateResponse(ctx context.Context, comment model.CommentInput, parentCommentID string) (bool, error)
+	CreateResponse(ctx context.Context, comment model.CommentInput, parentCommentID string) (*model.Comment, error)
 
 	GetVideoComments(ctx context.Context, videoID string) ([]*model.Comment, error)
 	GetCommentResponses(ctx context.Context, commentID string) ([]*model.Comment, error)
@@ -170,8 +170,6 @@ func (csql *CommentServiceSQL) CreateComment(ctx context.Context, comment model.
 	// Defer a rollback in case anything fails.
 	defer tx.Rollback()
 
-	// INSERT INTO comment(id, date_posted, body, video_id, profile_id, likes, dislikes, responses) VALUES (uuid_generate_v4(), now()::TIMESTAMPTZ, "test comment", '75f665c6-0aa4-4463-bb57-854c66c9bed8', ' 6adbb5ec-13c3-46c8-9b94-3c9f2cf1a660', 0, 0, 0) RETURNING id, date_posted, body, video_id, profile_id, likes, dislikes, responses
-
 	row := tx.QueryRowContext(ctx, "INSERT INTO comment(id, date_posted, body, video_id, profile_id, likes, dislikes, responses) VALUES (uuid_generate_v4(), now()::TIMESTAMPTZ, $1, $2, $3, 0, 0, 0) RETURNING id, date_posted, body, video_id, likes, dislikes, responses", comment.Body, comment.VideoID, commentorId)
 	if err != nil {
 		return nil, errors.New("inset comment failed")
@@ -227,13 +225,13 @@ func (csql *CommentServiceSQL) CreateComment(ctx context.Context, comment model.
 
 }
 
-func (csql *CommentServiceSQL) CreateResponse(ctx context.Context, comment model.CommentInput, parentCommentID string) (bool, error) {
+func (csql *CommentServiceSQL) CreateResponse(ctx context.Context, comment model.CommentInput, parentCommentID string) (*model.Comment, error) {
 
 	// Handle setting parent comment id in the frontend
 
 	commentorId := ctx.Value(utils.UserKey)
 	if commentorId == nil {
-		return false, errors.New("token is nil")
+		return nil, errors.New("token is nil")
 	}
 
 	fail := func(err error) error {
@@ -242,52 +240,67 @@ func (csql *CommentServiceSQL) CreateResponse(ctx context.Context, comment model
 
 	tx, err := csql.DB.BeginTx(ctx, nil)
 	if err != nil {
-		return false, fail(err)
+		return nil, fail(err)
 	}
 	// Defer a rollback in case anything fails.
 	defer tx.Rollback()
 
-	row := tx.QueryRowContext(ctx, "INSERT INTO comment(id, date_posted, body, video_id, profile_id, parent_comment, likes, dislikes, responses) VALUES (uuid_generate_v4(), now()::TIMESTAMPTZ, $1, $2, $3, $4, 0, 0, 0) RETURNING id", comment.Body, comment.VideoID, commentorId, parentCommentID)
+	row := tx.QueryRowContext(ctx, "INSERT INTO comment(id, date_posted, body, video_id, profile_id, likes, dislikes, responses, parent_comment) VALUES (uuid_generate_v4(), now()::TIMESTAMPTZ, $1, $2, $3, 0, 0, 0, $4) RETURNING id, date_posted, body, video_id, likes, dislikes, responses, parent_comment", comment.Body, comment.VideoID, commentorId, parentCommentID)
 	if err != nil {
-		return false, errors.New("inset comment failed " + err.Error())
+		return nil, errors.New("inset comment failed")
 	}
 
-	var commentId string
+	var commentToReturn = model.Comment{}
+	err = row.Scan(&commentToReturn.ID, &commentToReturn.DatePosted, &commentToReturn.Body, &commentToReturn.VideoID, &commentToReturn.Likes, &commentToReturn.Dislikes, &commentToReturn.Responses, &commentToReturn.ParentID)
+	if err != nil {
+		return nil, err
+	}
 
-	row.Scan(&commentId)
+	_, err = tx.ExecContext(ctx, "UPDATE statistic SET comments = comments + 1 WHERE video_id = $1", comment.VideoID)
+	if err != nil {
+		return nil, err
+	}
+	_, err = tx.ExecContext(ctx, "UPDATE comment SET responses = responses + 1 WHERE id = $1", commentToReturn.ParentID)
+	if err != nil {
+		return nil, err
+	}
 
 	valueStrings := []string{}
 	valueArgs := []any{}
 	i := 0
 
+	// mentions in the body
 	pattern := regexp.MustCompile(`\B\@([\w\-]+)`)
 	mentions := pattern.FindAllString(comment.Body, 20)
 
-	for _, mention := range mentions {
-		valueStrings = append(valueStrings, fmt.Sprintf("$%d", i+2))
-		valueArgs = append(valueArgs, fmt.Sprintf("%s", string(mention[1:])))
-		i++
+	if len(mentions) > 0 {
 
-	}
+		for _, mention := range mentions {
+			valueStrings = append(valueStrings, fmt.Sprintf("$%d", i+2))
+			valueArgs = append(valueArgs, string(mention[1:]))
+			i++
 
-	stmt := fmt.Sprintf("INSERT INTO profile_comment_mention(comment_id, profile_id) SELECT $1, id FROM profile WHERE username IN (%s)", strings.Join(valueStrings, ","))
+		}
 
-	valueArgs = append([]any{commentId}, valueArgs...)
-	for _, value := range valueArgs {
+		stmt := fmt.Sprintf("INSERT INTO profile_comment_mention(comment_id, profile_id) SELECT $1, id FROM profile WHERE username IN (%s)", strings.Join(valueStrings, ","))
 
-		fmt.Printf("%v \n", value)
-	}
+		valueArgs = append([]any{commentToReturn.ID}, valueArgs...)
+		for _, value := range valueArgs {
 
-	_, err = tx.ExecContext(ctx, stmt, valueArgs...)
-	if err != nil {
-		return false, err
+			fmt.Printf("%v \n", value)
+		}
+
+		_, err = tx.ExecContext(ctx, stmt, valueArgs...)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err = tx.Commit(); err != nil {
-		return false, fail(err)
+		return nil, fail(err)
 	}
 
-	return true, nil
+	return &commentToReturn, nil
 
 }
 
@@ -302,7 +315,7 @@ func (csql *CommentServiceSQL) GetVideoComments(ctx context.Context, videoID str
 
 		fmt.Println("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE video_id = $2")
 
-		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE video_id = $2 ORDER BY date_posted DESC", profileId, videoID)
+		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE video_id = $2 AND  parent_comment IS NULL ORDER BY date_posted DESC", profileId, videoID)
 		if err != nil {
 			return nil, err
 		}
@@ -310,7 +323,7 @@ func (csql *CommentServiceSQL) GetVideoComments(ctx context.Context, videoID str
 	} else {
 
 		fmt.Println("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, NULL AS status FROM comment WHERE video_id = $1")
-		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, NULL AS status FROM comment WHERE video_id = $1 ORDER BY date_posted DESC", videoID)
+		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, NULL AS status FROM comment WHERE video_id = $1 AND  parent_comment IS NULL ORDER BY date_posted DESC", videoID)
 		if err != nil {
 			return nil, err
 		}
@@ -328,6 +341,8 @@ func (csql *CommentServiceSQL) GetVideoComments(ctx context.Context, videoID str
 			return nil, err
 		}
 
+		comment.VideoID = &videoID
+
 		comments = append(comments, &comment)
 
 	}
@@ -344,14 +359,17 @@ func (csql *CommentServiceSQL) GetCommentResponses(ctx context.Context, commentI
 
 	if profileId != nil {
 
-		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE parent_comment = $2", profileId, commentID)
+		fmt.Println("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE video_id = $2")
+
+		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, video_id, (SELECT status FROM profile_comment_like_dislike WHERE comment_id = comment.id AND profile_id = $1) FROM comment WHERE parent_comment = $2 ORDER BY date_posted DESC", profileId, commentID)
 		if err != nil {
 			return nil, err
 		}
 
 	} else {
 
-		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, NULL AS status FROM comment WHERE parent_comment = $1", commentID)
+		fmt.Println("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, video_id, NULL AS status FROM comment WHERE video_id = $1")
+		rows, err = csql.DB.Query("SELECT id, date_posted, body, parent_comment, likes, dislikes, responses, video_id, NULL AS status FROM comment WHERE parent_comment = $1 ORDER BY date_posted DESC", commentID)
 		if err != nil {
 			return nil, err
 		}
@@ -364,7 +382,7 @@ func (csql *CommentServiceSQL) GetCommentResponses(ctx context.Context, commentI
 
 		comment := model.Comment{}
 
-		err := rows.Scan(&comment.ID, &comment.DatePosted, &comment.Body, &comment.ParentID, &comment.Status)
+		err := rows.Scan(&comment.ID, &comment.DatePosted, &comment.Body, &comment.ParentID, &comment.Likes, &comment.Dislikes, &comment.Responses, &comment.VideoID, &comment.Status)
 		if err != nil {
 			return nil, err
 		}
