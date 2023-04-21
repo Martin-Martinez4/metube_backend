@@ -12,6 +12,7 @@ type ProfileService interface {
 	GetProfileIdFromUsername(username string) (string, error)
 	GetProfileByUsername(ctx context.Context, username string) (*model.Profile, error)
 	GetMultipleProfiles(amount int) ([]*model.Profile, error)
+	GetLoggedInProfile(ctx context.Context) (*model.Profile, error)
 
 	Subscribe(ctx context.Context, subscribee string) (bool, error)
 	Unsubscribe(ctx context.Context, subscribee string) (bool, error)
@@ -52,6 +53,25 @@ func (psql *ProfileServiceSQL) GetProfileByUsername(ctx context.Context, usernam
 		row = psql.DB.QueryRow("SELECT username, displayname, isChannel, subscribers, EXISTS(SELECT 1 FROM subscriber_subscribee WHERE subscriber_id = $1 AND subscribee_id = profile.id) AS user_subscribed FROM profile WHERE username = $2", profileId, username)
 
 	}
+
+	profile := model.Profile{}
+
+	err := row.Scan(&profile.Username, &profile.Displayname, &profile.IsChannel, &profile.Subscribers, &profile.UserIsSubscribedTo)
+
+	if err != nil {
+
+		return nil, err
+	}
+
+	return &profile, nil
+
+}
+
+func (psql *ProfileServiceSQL) GetLoggedInProfile(ctx context.Context) (*model.Profile, error) {
+
+	profileId := ctx.Value(utils.UserKey)
+
+	row := psql.DB.QueryRow("SELECT username, displayname, isChannel, subscribers, false FROM profile WHERE id = $1", profileId)
 
 	profile := model.Profile{}
 

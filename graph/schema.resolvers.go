@@ -46,6 +46,10 @@ func (r *mutationResolver) Login(ctx context.Context, login model.LoginInput) (*
 	return profile, err
 }
 
+func (r *queryResolver) GetLoggedInProfile(ctx context.Context) (*model.Profile, error) {
+	return r.ProfileService.GetLoggedInProfile(ctx)
+}
+
 // Register is the resolver for the register field.
 func (r *mutationResolver) Register(ctx context.Context, profileToRegister model.RegisterInput) (*model.Profile, error) {
 	// Validate profile here

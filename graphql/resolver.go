@@ -136,6 +136,11 @@ func (r *queryResolver) Profiles(ctx context.Context, amount int) ([]*model.Prof
 }
 
 // // foo
+func (r *queryResolver) GetLoggedInProfile(ctx context.Context) (*model.Profile, error) {
+	panic("not implemented")
+}
+
+// // foo
 func (r *queryResolver) GetMentions(ctx context.Context) ([]*model.Comment, error) {
 	panic("not implemented")
 }

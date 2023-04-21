@@ -43,7 +43,9 @@ func (authsql *AuthServiceSQL) Login(ctx context.Context, login model.LoginInput
 		return nil, errors.New("passwords do not mach")
 	}
 
-	jwtToken, err := utils.CreateJWT(idFromDB, 10)
+	const minutesUntilTokenExpiration = 10
+
+	jwtToken, err := utils.CreateJWT(idFromDB, minutesUntilTokenExpiration)
 	if err != nil {
 		return nil, err
 
@@ -52,7 +54,7 @@ func (authsql *AuthServiceSQL) Login(ctx context.Context, login model.LoginInput
 	cookie := http.Cookie{
 		Name:     "Auth",
 		Value:    "Bearer " + jwtToken,
-		Expires:  time.Now().Add(10 * time.Minute),
+		Expires:  time.Now().Add(minutesUntilTokenExpiration * time.Minute),
 		HttpOnly: true,
 	}
 

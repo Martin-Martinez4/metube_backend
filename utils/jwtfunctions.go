@@ -9,12 +9,21 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
+type customClaims struct {
+	Id string `json:"id"`
+	jwt.StandardClaims
+}
+
 func CreateJWT(id string, minutesValid time.Duration) (string, error) {
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":        id,
-		"ExpiresAt": time.Now().Add(minutesValid * time.Minute).UnixMilli(),
-	})
+	claims := customClaims{
+		Id: id,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(minutesValid * time.Minute).UnixMilli(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	JWT_SECRET := []byte(os.Getenv("JWT_SECRET"))
 	tokenString, err := token.SignedString([]byte(JWT_SECRET))
@@ -27,9 +36,9 @@ func CreateJWT(id string, minutesValid time.Duration) (string, error) {
 }
 
 // Vlaidate and Parse JWT
-func ValidateJWT(tokenString string) (jwt.MapClaims, error) {
+func ValidateJWT(tokenString string) (*customClaims, error) {
 
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &customClaims{}, func(token *jwt.Token) (interface{}, error) {
 
 		// verify algorithm used
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -45,7 +54,7 @@ func ValidateJWT(tokenString string) (jwt.MapClaims, error) {
 		return nil, err
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(*customClaims)
 
 	if !ok {
 

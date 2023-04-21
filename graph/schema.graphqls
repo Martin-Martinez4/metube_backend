@@ -16,6 +16,7 @@ type Query{
 
   profile(username: String!): Profile @authorizeoptional
   profiles(amount: Int!): [Profile]
+  getLoggedInProfile: Profile! @authorize
   getMentions: [Comment]!
 
  

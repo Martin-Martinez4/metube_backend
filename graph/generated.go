@@ -96,6 +96,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		GetCommentResponses func(childComplexity int, commentID string) int
+		GetLoggedInProfile  func(childComplexity int) int
 		GetMentions         func(childComplexity int) int
 		GetVideoComments    func(childComplexity int, videoID string) int
 		GetVideoLikeStatus  func(childComplexity int, id string) int
@@ -163,6 +164,7 @@ type QueryResolver interface {
 	GetCommentResponses(ctx context.Context, commentID string) ([]*model.Comment, error)
 	Profile(ctx context.Context, username string) (*model.Profile, error)
 	Profiles(ctx context.Context, amount int) ([]*model.Profile, error)
+	GetLoggedInProfile(ctx context.Context) (*model.Profile, error)
 	GetMentions(ctx context.Context) ([]*model.Comment, error)
 }
 type VideoResolver interface {
@@ -500,6 +502,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetCommentResponses(childComplexity, args["comment_id"].(string)), true
+
+	case "Query.getLoggedInProfile":
+		if e.complexity.Query.GetLoggedInProfile == nil {
+			break
+		}
+
+		return e.complexity.Query.GetLoggedInProfile(childComplexity), true
 
 	case "Query.getMentions":
 		if e.complexity.Query.GetMentions == nil {
@@ -3650,6 +3659,82 @@ func (ec *executionContext) fieldContext_Query_profiles(ctx context.Context, fie
 	if fc.Args, err = ec.field_Query_profiles_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getLoggedInProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getLoggedInProfile(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().GetLoggedInProfile(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Authorize == nil {
+				return nil, errors.New("directive authorize is not implemented")
+			}
+			return ec.directives.Authorize(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Profile); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github/Martin-Martinez4/metube_backend/graph/model.Profile`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Profile)
+	fc.Result = res
+	return ec.marshalNProfile2ᚖgithubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐProfile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getLoggedInProfile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "username":
+				return ec.fieldContext_Profile_username(ctx, field)
+			case "displayname":
+				return ec.fieldContext_Profile_displayname(ctx, field)
+			case "isChannel":
+				return ec.fieldContext_Profile_isChannel(ctx, field)
+			case "subscribers":
+				return ec.fieldContext_Profile_subscribers(ctx, field)
+			case "userIsSubscribedTo":
+				return ec.fieldContext_Profile_userIsSubscribedTo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -7108,6 +7193,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "getLoggedInProfile":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getLoggedInProfile(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "getMentions":
 			field := field
 
@@ -7839,6 +7947,20 @@ func (ec *executionContext) unmarshalNPRIVACYSTATUS2githubᚋMartinᚑMartinez4�
 
 func (ec *executionContext) marshalNPRIVACYSTATUS2githubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐPrivacystatus(ctx context.Context, sel ast.SelectionSet, v model.Privacystatus) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNProfile2githubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐProfile(ctx context.Context, sel ast.SelectionSet, v model.Profile) graphql.Marshaler {
+	return ec._Profile(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNProfile2ᚖgithubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐProfile(ctx context.Context, sel ast.SelectionSet, v *model.Profile) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Profile(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
