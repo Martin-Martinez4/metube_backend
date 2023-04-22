@@ -46,6 +46,11 @@ func (r *mutationResolver) Login(ctx context.Context, login model.LoginInput) (*
 	return profile, err
 }
 
+func (r *mutationResolver) Logout(ctx context.Context) (*model.Profile, error) {
+	return r.AuthService.Logout(ctx)
+
+}
+
 func (r *queryResolver) GetLoggedInProfile(ctx context.Context) (*model.Profile, error) {
 	return r.ProfileService.GetLoggedInProfile(ctx)
 }

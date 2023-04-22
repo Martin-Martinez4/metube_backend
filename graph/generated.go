@@ -79,6 +79,7 @@ type ComplexityRoot struct {
 		LikeComment              func(childComplexity int, commentID string) int
 		LikeVideo                func(childComplexity int, videoID string) int
 		Login                    func(childComplexity int, login model.LoginInput) int
+		Logout                   func(childComplexity int) int
 		Register                 func(childComplexity int, profileToRegister model.RegisterInput) int
 		Subscribe                func(childComplexity int, subscribee string) int
 		Unsubscribe              func(childComplexity int, subscribee string) int
@@ -143,6 +144,7 @@ type CommentResolver interface {
 type MutationResolver interface {
 	UpsertVideo(ctx context.Context, input model.VideoInput) (*model.Video, error)
 	Login(ctx context.Context, login model.LoginInput) (*model.Profile, error)
+	Logout(ctx context.Context) (*model.Profile, error)
 	Register(ctx context.Context, profileToRegister model.RegisterInput) (*model.Profile, error)
 	Subscribe(ctx context.Context, subscribee string) (bool, error)
 	Unsubscribe(ctx context.Context, subscribee string) (bool, error)
@@ -395,6 +397,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.Login(childComplexity, args["login"].(model.LoginInput)), true
+
+	case "Mutation.logout":
+		if e.complexity.Mutation.Logout == nil {
+			break
+		}
+
+		return e.complexity.Mutation.Logout(childComplexity), true
 
 	case "Mutation.register":
 		if e.complexity.Mutation.Register == nil {
@@ -1936,6 +1945,59 @@ func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, fie
 	if fc.Args, err = ec.field_Mutation_login_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_logout(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_logout(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().Logout(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Profile)
+	fc.Result = res
+	return ec.marshalOProfile2ᚖgithubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐProfile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_logout(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "username":
+				return ec.fieldContext_Profile_username(ctx, field)
+			case "displayname":
+				return ec.fieldContext_Profile_displayname(ctx, field)
+			case "isChannel":
+				return ec.fieldContext_Profile_isChannel(ctx, field)
+			case "subscribers":
+				return ec.fieldContext_Profile_subscribers(ctx, field)
+			case "userIsSubscribedTo":
+				return ec.fieldContext_Profile_userIsSubscribedTo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Profile", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -6866,6 +6928,12 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_login(ctx, field)
+			})
+
+		case "logout":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_logout(ctx, field)
 			})
 
 		case "register":

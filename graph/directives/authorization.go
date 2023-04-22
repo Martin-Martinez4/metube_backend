@@ -20,14 +20,16 @@ func Authorization(ctx context.Context, obj interface{}, next graphql.Resolver) 
 	tokencookie := ctx.Value(utils.TokenCookieKey)
 	if tokencookie == nil {
 		// block calling the next resolver
-		return nil, errors.New("no token present, access denied")
+		// return nil, errors.New("no token present, access denied")
+		return nil, errors.New("access denied")
 	}
 
 	// validate token here
 	tokenSlice := strings.Split(tokencookie.(string), "Bearer ")
 	if len(tokenSlice) < 2 {
 
-		return nil, errors.New("malformed token, access denied")
+		// return nil, errors.New("malformed token, access denied")
+		return nil, errors.New("access denied")
 
 	}
 
@@ -41,12 +43,14 @@ func Authorization(ctx context.Context, obj interface{}, next graphql.Resolver) 
 
 	if claims.StandardClaims.ExpiresAt < time.Now().UnixMilli() {
 
-		return nil, errors.New("token has expired")
+		// return nil, errors.New("token has expired, access denied")
+		return nil, errors.New("access denied")
 	}
 
 	idFromClaims := claims.Id
 	if idFromClaims == "" {
-		return nil, errors.New("claim id is empty. access denied")
+		// return nil, errors.New("claim id is empty. access denied")
+		return nil, errors.New("access denied")
 	}
 
 	newctx := context.WithValue(ctx, utils.UserKey, idFromClaims)

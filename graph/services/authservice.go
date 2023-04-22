@@ -16,6 +16,7 @@ import (
 
 type AuthService interface {
 	Login(ctx context.Context, login model.LoginInput) (*model.Profile, error)
+	Logout(ctx context.Context) (*model.Profile, error)
 	Register(ctx context.Context, profile model.RegisterInput) (*model.Profile, error)
 }
 
@@ -63,6 +64,20 @@ func (authsql *AuthServiceSQL) Login(ctx context.Context, login model.LoginInput
 	http.SetCookie(ctx.Value(utils.ResponseWriterKey).(http.ResponseWriter), &cookie)
 
 	return profile, nil
+
+}
+func (authsql *AuthServiceSQL) Logout(ctx context.Context) (*model.Profile, error) {
+
+	cookie := http.Cookie{
+		Name:     "Auth",
+		Value:    "",
+		Expires:  time.Now(),
+		HttpOnly: true,
+	}
+
+	http.SetCookie(ctx.Value(utils.ResponseWriterKey).(http.ResponseWriter), &cookie)
+
+	return nil, nil
 
 }
 

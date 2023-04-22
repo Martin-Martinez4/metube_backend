@@ -41,6 +41,11 @@ func (r *mutationResolver) Login(ctx context.Context, login model.LoginInput) (*
 }
 
 // // foo
+func (r *mutationResolver) Logout(ctx context.Context) (*model.Profile, error) {
+	panic("not implemented")
+}
+
+// // foo
 func (r *mutationResolver) Register(ctx context.Context, profileToRegister model.RegisterInput) (*model.Profile, error) {
 	panic("not implemented")
 }
