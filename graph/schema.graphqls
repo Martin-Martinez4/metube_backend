@@ -1,0 +1,142 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+# To run generation: go run github.com/99designs/gqlgen generate
+
+# Each line is a new potential query
+# (id:ID!) ! means the id is required
+# Thin after : is what is returned
+type Query{
+  videos(amount: Int): [Video]
+  video(id:ID!): Video @authorizeoptional
+  getVideoLikeStatus(id:ID!): LIKE_DISLIKE @authorize
+
+  getVideoComments(video_id: String!): [Comment]! @authorizeoptional
+  getCommentResponses(comment_id: String!): [Comment]! @authorizeoptional
+
+  profile(username: String!): Profile @authorizeoptional
+  profiles(amount: Int!): [Profile]
+  getLoggedInProfile: Profile! @authorize
+  getMentions: [Comment]!
+
+ 
+}
+
+# Input Type is responsible for handling the input needed to create or modify a character.
+type Mutation{
+  upsertVideo(input: VideoInput!): Video!
+  login(login: loginInput!): Profile
+  logout: Profile
+  register(profileToRegister: registerInput!): Profile
+
+  subscribe(subscribee: String!): Boolean! @authorize
+  unsubscribe(subscribee: String!): Boolean! @authorize
+  videoView(video_id: String!) :Boolean! @authorizeoptional
+  likeVideo(video_id: String!): Boolean! @authorize
+  dislikeVideo(video_id: String!): Boolean! @authorize
+  deleteLikeDislikeVideo(video_id: String!): Boolean! @authorize
+
+  createComment(comment: CommentInput!): Comment! @authorize
+  createResponse(comment: CommentInput!, parent_comment_id: String!): Comment! @authorize
+  likeComment(comment_id: String!): Boolean! @authorize
+  dislikeComment(comment_id: String!): Boolean! @authorize
+  deleteLikeDislikeComment(comment_id: String!): Boolean! @authorize
+
+
+}
+
+# id, title, description, url, categoryid, duration, channelid, published
+type Video{
+  id: ID!
+  url: String!
+  categoryid: String!
+  duration: Int!
+  profile_id: ID!
+  contentinformation: ContentInformation
+  thumbnail: Thumbnail
+  statistic: Statistic
+  status: Status 
+  profile: Profile
+
+}
+
+type ContentInformation{
+  title: String!
+  description: String!
+  published: String!
+  channelid: String!
+
+}
+
+type Comment{
+  id: ID!
+  datePosted: String!
+  body: String!
+  video_id: String
+  parent_id: String
+  likes: Int!
+  dislikes: Int!
+  responses: Int!
+  status: LIKE_DISLIKE
+  Profile: Profile
+}
+
+type Profile{
+  username: String!
+  displayname: String
+  isChannel: Boolean
+  subscribers: Int
+  userIsSubscribedTo: Boolean
+
+}
+
+type Thumbnail{
+  url: String!
+  
+}
+
+type Statistic {
+  likes: Int!
+  dislikes: Int!
+  views: Int!
+  favorites: Int
+  comments: Int!
+
+}
+
+
+enum UPLOADSTATUS{processing, error, complete}
+enum PRIVACYSTATUS{private, public}
+enum LIKE_DISLIKE{like, dislike}
+
+type Status{
+  uploadstatus: UPLOADSTATUS!
+  privacystatus: PRIVACYSTATUS!
+}
+
+input CommentInput {
+  body: String!,
+  VideoId: String!,
+}
+
+input VideoInput {
+  id: ID!
+  url: String!
+}
+
+input loginInput{
+  username: String!
+  password: String!
+}
+
+input registerInput{
+  username: String!
+  displayname: String!
+  password: String!
+  password2: String!
+}
+
+directive @authorize on FIELD_DEFINITION
+directive @authorizeoptional on FIELD_DEFINITION
+
+
