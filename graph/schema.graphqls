@@ -8,7 +8,10 @@
 # Thin after : is what is returned
 type Query{
   videos(amount: Int): [Video]
+<<<<<<< HEAD
+=======
   SearchForVideoByTitle(searchTerm: String!): [Video]
+>>>>>>> master
   video(id:ID!): Video @authorizeoptional
   getVideoLikeStatus(id:ID!): LIKE_DISLIKE @authorize
 

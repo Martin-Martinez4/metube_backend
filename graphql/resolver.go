@@ -111,11 +111,14 @@ func (r *queryResolver) Videos(ctx context.Context, amount *int) ([]*model.Video
 }
 
 // // foo
+<<<<<<< HEAD
+=======
 func (r *queryResolver) SearchForVideoByTitle(ctx context.Context, searchTerm string) ([]*model.Video, error) {
 	panic("not implemented")
 }
 
 // // foo
+>>>>>>> master
 func (r *queryResolver) Video(ctx context.Context, id string) (*model.Video, error) {
 	panic("not implemented")
 }
