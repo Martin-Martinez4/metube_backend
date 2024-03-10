@@ -130,6 +130,9 @@ func (r *queryResolver) Videos(ctx context.Context, amount *int) ([]*model.Video
 func (r *queryResolver) Video(ctx context.Context, id string) (*model.Video, error) {
 	return r.VideoService.GetVideoById(id)
 }
+func (r *queryResolver) SearchForVideoByTitle(ctx context.Context, searchTerm string) ([]*model.Video, error) {
+	return r.VideoService.SearchForVideoByTitle(searchTerm)
+}
 
 // GetVideoLikeStatus is the resolver for the getVideoLikeStatus field.
 func (r *queryResolver) GetVideoLikeStatus(ctx context.Context, id string) (*model.LikeDislike, error) {

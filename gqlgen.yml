@@ -41,8 +41,8 @@ model:
 
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
-# autobind:
-#  - "github/Martin-Martinez4/metube_backend/graph/model"
+autobind:
+ - "github/Martin-Martinez4/metube_backend/graph/model"
 
 # This section declares type mapping between the GraphQL and go type systems
 #
@@ -83,4 +83,4 @@ models:
 resolver:
   filename: graphql/resolver.go
   type: Resolver
-autobind: []
+# autobind: []
