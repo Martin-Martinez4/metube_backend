@@ -9,6 +9,10 @@ import (
 
 type VideoService interface {
 	GetVideoById(id string) (*model.Video, error)
+<<<<<<< HEAD
+=======
+	SearchForVideoByTitle(searchTerm string) ([]*model.Video, error)
+>>>>>>> master
 	GetVideoLikeStatus(ctx context.Context, id string) (*model.LikeDislike, error)
 	GetContentInformation(id string) (*model.ContentInformation, error)
 	GetThumbnail(id string) (*model.Thumbnail, error)
@@ -159,3 +163,38 @@ func (vsql *VideoServiceSQL) GetProfile(ctx context.Context, id string) (*model.
 
 	return &profile, nil
 }
+<<<<<<< HEAD
+=======
+
+func (vsql *VideoServiceSQL) SearchForVideoByTitle(searchTerm string) ([]*model.Video, error) {
+
+	var similarityThershold float32 = 0.09
+
+	// 	SELECT
+	// 	title
+	// FROM contentinformation
+	// WHERE similarity(title, 'JavaScript') > .09;
+
+	rows, err := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM contentinformation JOIN video ON contentinformation.video_id = video.id WHERE similarity(contentinformation.title, $1) > $2", searchTerm, similarityThershold)
+	if err != nil {
+		return nil, err
+	}
+
+	videos := []*model.Video{}
+
+	for rows.Next() {
+
+		video := model.Video{}
+
+		err := rows.Scan(&video.ID, &video.URL, &video.Categoryid, &video.Duration, &video.ProfileID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		videos = append(videos, &video)
+	}
+
+	return videos, nil
+}
+>>>>>>> master
