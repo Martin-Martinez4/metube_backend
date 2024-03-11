@@ -96,17 +96,6 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-<<<<<<< HEAD
-		GetCommentResponses func(childComplexity int, commentID string) int
-		GetLoggedInProfile  func(childComplexity int) int
-		GetMentions         func(childComplexity int) int
-		GetVideoComments    func(childComplexity int, videoID string) int
-		GetVideoLikeStatus  func(childComplexity int, id string) int
-		Profile             func(childComplexity int, username string) int
-		Profiles            func(childComplexity int, amount int) int
-		Video               func(childComplexity int, id string) int
-		Videos              func(childComplexity int, amount *int) int
-=======
 		GetCommentResponses   func(childComplexity int, commentID string) int
 		GetLoggedInProfile    func(childComplexity int) int
 		GetMentions           func(childComplexity int) int
@@ -117,7 +106,6 @@ type ComplexityRoot struct {
 		SearchForVideoByTitle func(childComplexity int, searchTerm string) int
 		Video                 func(childComplexity int, id string) int
 		Videos                func(childComplexity int, amount *int) int
->>>>>>> master
 	}
 
 	Statistic struct {
@@ -173,10 +161,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	Videos(ctx context.Context, amount *int) ([]*model.Video, error)
-<<<<<<< HEAD
-=======
 	SearchForVideoByTitle(ctx context.Context, searchTerm string) ([]*model.Video, error)
->>>>>>> master
 	Video(ctx context.Context, id string) (*model.Video, error)
 	GetVideoLikeStatus(ctx context.Context, id string) (*model.LikeDislike, error)
 	GetVideoComments(ctx context.Context, videoID string) ([]*model.Comment, error)
@@ -591,8 +576,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Profiles(childComplexity, args["amount"].(int)), true
 
-<<<<<<< HEAD
-=======
 	case "Query.SearchForVideoByTitle":
 		if e.complexity.Query.SearchForVideoByTitle == nil {
 			break
@@ -605,7 +588,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.SearchForVideoByTitle(childComplexity, args["searchTerm"].(string)), true
 
->>>>>>> master
 	case "Query.video":
 		if e.complexity.Query.Video == nil {
 			break
@@ -1066,8 +1048,6 @@ func (ec *executionContext) field_Mutation_videoView_args(ctx context.Context, r
 	return args, nil
 }
 
-<<<<<<< HEAD
-=======
 func (ec *executionContext) field_Query_SearchForVideoByTitle_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1083,7 +1063,6 @@ func (ec *executionContext) field_Query_SearchForVideoByTitle_args(ctx context.C
 	return args, nil
 }
 
->>>>>>> master
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3267,8 +3246,6 @@ func (ec *executionContext) fieldContext_Query_videos(ctx context.Context, field
 	return fc, nil
 }
 
-<<<<<<< HEAD
-=======
 func (ec *executionContext) _Query_SearchForVideoByTitle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_SearchForVideoByTitle(ctx, field)
 	if err != nil {
@@ -3343,7 +3320,6 @@ func (ec *executionContext) fieldContext_Query_SearchForVideoByTitle(ctx context
 	return fc, nil
 }
 
->>>>>>> master
 func (ec *executionContext) _Query_video(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_video(ctx, field)
 	if err != nil {
@@ -7262,8 +7238,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-<<<<<<< HEAD
-=======
 		case "SearchForVideoByTitle":
 			field := field
 
@@ -7284,7 +7258,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
->>>>>>> master
 		case "video":
 			field := field
 

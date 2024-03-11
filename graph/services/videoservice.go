@@ -9,10 +9,7 @@ import (
 
 type VideoService interface {
 	GetVideoById(id string) (*model.Video, error)
-<<<<<<< HEAD
-=======
 	SearchForVideoByTitle(searchTerm string) ([]*model.Video, error)
->>>>>>> master
 	GetVideoLikeStatus(ctx context.Context, id string) (*model.LikeDislike, error)
 	GetContentInformation(id string) (*model.ContentInformation, error)
 	GetThumbnail(id string) (*model.Thumbnail, error)
@@ -163,8 +160,6 @@ func (vsql *VideoServiceSQL) GetProfile(ctx context.Context, id string) (*model.
 
 	return &profile, nil
 }
-<<<<<<< HEAD
-=======
 
 func (vsql *VideoServiceSQL) SearchForVideoByTitle(searchTerm string) ([]*model.Video, error) {
 
@@ -197,4 +192,3 @@ func (vsql *VideoServiceSQL) SearchForVideoByTitle(searchTerm string) ([]*model.
 
 	return videos, nil
 }
->>>>>>> master
