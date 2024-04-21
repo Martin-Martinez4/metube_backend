@@ -96,28 +96,17 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-<<<<<<< HEAD
-		GetCommentResponses func(childComplexity int, commentID string) int
-		GetLoggedInProfile  func(childComplexity int) int
-		GetMentions         func(childComplexity int) int
-		GetVideoComments    func(childComplexity int, videoID string) int
-		GetVideoLikeStatus  func(childComplexity int, id string) int
-		Profile             func(childComplexity int, username string) int
-		Profiles            func(childComplexity int, amount int) int
-		Video               func(childComplexity int, id string) int
-		Videos              func(childComplexity int, amount *int) int
-=======
-		GetCommentResponses   func(childComplexity int, commentID string) int
-		GetLoggedInProfile    func(childComplexity int) int
-		GetMentions           func(childComplexity int) int
-		GetVideoComments      func(childComplexity int, videoID string) int
-		GetVideoLikeStatus    func(childComplexity int, id string) int
-		Profile               func(childComplexity int, username string) int
-		Profiles              func(childComplexity int, amount int) int
-		SearchForVideoByTitle func(childComplexity int, searchTerm string) int
-		Video                 func(childComplexity int, id string) int
-		Videos                func(childComplexity int, amount *int) int
->>>>>>> master
+		GetCommentResponses        func(childComplexity int, commentID string) int
+		GetLoggedInProfile         func(childComplexity int) int
+		GetMentions                func(childComplexity int) int
+		GetVideoComments           func(childComplexity int, videoID string) int
+		GetVideoLikeStatus         func(childComplexity int, id string) int
+		GetVideosByProfileUsername func(childComplexity int, profileUsername string) int
+		Profile                    func(childComplexity int, username string) int
+		Profiles                   func(childComplexity int, amount int) int
+		SearchForVideoByTitle      func(childComplexity int, searchTerm string) int
+		Video                      func(childComplexity int, id string) int
+		Videos                     func(childComplexity int, amount *int) int
 	}
 
 	Statistic struct {
@@ -173,10 +162,8 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	Videos(ctx context.Context, amount *int) ([]*model.Video, error)
-<<<<<<< HEAD
-=======
 	SearchForVideoByTitle(ctx context.Context, searchTerm string) ([]*model.Video, error)
->>>>>>> master
+	GetVideosByProfileUsername(ctx context.Context, profileUsername string) ([]*model.Video, error)
 	Video(ctx context.Context, id string) (*model.Video, error)
 	GetVideoLikeStatus(ctx context.Context, id string) (*model.LikeDislike, error)
 	GetVideoComments(ctx context.Context, videoID string) ([]*model.Comment, error)
@@ -567,6 +554,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetVideoLikeStatus(childComplexity, args["id"].(string)), true
 
+	case "Query.getVideosByProfileUsername":
+		if e.complexity.Query.GetVideosByProfileUsername == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getVideosByProfileUsername_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetVideosByProfileUsername(childComplexity, args["profileUsername"].(string)), true
+
 	case "Query.profile":
 		if e.complexity.Query.Profile == nil {
 			break
@@ -591,8 +590,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Profiles(childComplexity, args["amount"].(int)), true
 
-<<<<<<< HEAD
-=======
 	case "Query.SearchForVideoByTitle":
 		if e.complexity.Query.SearchForVideoByTitle == nil {
 			break
@@ -605,7 +602,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.SearchForVideoByTitle(childComplexity, args["searchTerm"].(string)), true
 
->>>>>>> master
 	case "Query.video":
 		if e.complexity.Query.Video == nil {
 			break
@@ -1066,8 +1062,6 @@ func (ec *executionContext) field_Mutation_videoView_args(ctx context.Context, r
 	return args, nil
 }
 
-<<<<<<< HEAD
-=======
 func (ec *executionContext) field_Query_SearchForVideoByTitle_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1083,7 +1077,6 @@ func (ec *executionContext) field_Query_SearchForVideoByTitle_args(ctx context.C
 	return args, nil
 }
 
->>>>>>> master
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1141,6 +1134,21 @@ func (ec *executionContext) field_Query_getVideoLikeStatus_args(ctx context.Cont
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getVideosByProfileUsername_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["profileUsername"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("profileUsername"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["profileUsername"] = arg0
 	return args, nil
 }
 
@@ -3267,8 +3275,6 @@ func (ec *executionContext) fieldContext_Query_videos(ctx context.Context, field
 	return fc, nil
 }
 
-<<<<<<< HEAD
-=======
 func (ec *executionContext) _Query_SearchForVideoByTitle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_SearchForVideoByTitle(ctx, field)
 	if err != nil {
@@ -3343,7 +3349,80 @@ func (ec *executionContext) fieldContext_Query_SearchForVideoByTitle(ctx context
 	return fc, nil
 }
 
->>>>>>> master
+func (ec *executionContext) _Query_getVideosByProfileUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getVideosByProfileUsername(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetVideosByProfileUsername(rctx, fc.Args["profileUsername"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Video)
+	fc.Result = res
+	return ec.marshalOVideo2ᚕᚖgithubᚋMartinᚑMartinez4ᚋmetube_backendᚋgraphᚋmodelᚐVideo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getVideosByProfileUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Video_id(ctx, field)
+			case "url":
+				return ec.fieldContext_Video_url(ctx, field)
+			case "categoryid":
+				return ec.fieldContext_Video_categoryid(ctx, field)
+			case "duration":
+				return ec.fieldContext_Video_duration(ctx, field)
+			case "profile_id":
+				return ec.fieldContext_Video_profile_id(ctx, field)
+			case "contentinformation":
+				return ec.fieldContext_Video_contentinformation(ctx, field)
+			case "thumbnail":
+				return ec.fieldContext_Video_thumbnail(ctx, field)
+			case "statistic":
+				return ec.fieldContext_Video_statistic(ctx, field)
+			case "status":
+				return ec.fieldContext_Video_status(ctx, field)
+			case "profile":
+				return ec.fieldContext_Video_profile(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Video", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getVideosByProfileUsername_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_video(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_video(ctx, field)
 	if err != nil {
@@ -7262,8 +7341,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-<<<<<<< HEAD
-=======
 		case "SearchForVideoByTitle":
 			field := field
 
@@ -7284,7 +7361,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
->>>>>>> master
+		case "getVideosByProfileUsername":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getVideosByProfileUsername(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "video":
 			field := field
 

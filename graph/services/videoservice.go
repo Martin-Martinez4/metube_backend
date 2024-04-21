@@ -9,16 +9,14 @@ import (
 
 type VideoService interface {
 	GetVideoById(id string) (*model.Video, error)
-<<<<<<< HEAD
-=======
 	SearchForVideoByTitle(searchTerm string) ([]*model.Video, error)
->>>>>>> master
 	GetVideoLikeStatus(ctx context.Context, id string) (*model.LikeDislike, error)
 	GetContentInformation(id string) (*model.ContentInformation, error)
 	GetThumbnail(id string) (*model.Thumbnail, error)
 	GetStatistic(id string) (*model.Statistic, error)
 	GetStatus(id string) (*model.Status, error)
 	GetProfile(ctx context.Context, id string) (*model.Profile, error)
+	GetVideosByProfileUsername(profileUsername string) ([]*model.Video, error)
 	GetMultipleVideos(amount int) ([]*model.Video, error)
 }
 
@@ -163,8 +161,6 @@ func (vsql *VideoServiceSQL) GetProfile(ctx context.Context, id string) (*model.
 
 	return &profile, nil
 }
-<<<<<<< HEAD
-=======
 
 func (vsql *VideoServiceSQL) SearchForVideoByTitle(searchTerm string) ([]*model.Video, error) {
 
@@ -197,4 +193,28 @@ func (vsql *VideoServiceSQL) SearchForVideoByTitle(searchTerm string) ([]*model.
 
 	return videos, nil
 }
->>>>>>> master
+
+func (vsql *VideoServiceSQL) GetVideosByProfileUsername(profileUsername string) ([]*model.Video, error) {
+
+	rows, err := vsql.DB.Query("SELECT video.id, url, categoryid, duration, profile_id FROM video JOIN profile ON profile.id = video.profile_id WHERE profile.username =$1", profileUsername)
+	if err != nil {
+		return nil, err
+	}
+
+	videos := []*model.Video{}
+
+	for rows.Next() {
+
+		video := model.Video{}
+
+		err := rows.Scan(&video.ID, &video.URL, &video.Categoryid, &video.Duration, &video.ProfileID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		videos = append(videos, &video)
+	}
+
+	return videos, nil
+}

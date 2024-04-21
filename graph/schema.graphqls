@@ -5,13 +5,11 @@
 
 # Each line is a new potential query
 # (id:ID!) ! means the id is required
-# Thin after : is what is returned
+# Thing after : is what is returned
 type Query{
   videos(amount: Int): [Video]
-<<<<<<< HEAD
-=======
   SearchForVideoByTitle(searchTerm: String!): [Video]
->>>>>>> master
+  getVideosByProfileUsername(profileUsername: String!): [Video]
   video(id:ID!): Video @authorizeoptional
   getVideoLikeStatus(id:ID!): LIKE_DISLIKE @authorize
 
