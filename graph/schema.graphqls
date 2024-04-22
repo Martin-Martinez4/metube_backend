@@ -8,6 +8,7 @@
 # Thing after : is what is returned
 type Query{
   videos(amount: Int): [Video]
+  GetMultipleVideosSetOrder(seed:Float, limit: Int, offset: Int): [Video]
   SearchForVideoByTitle(searchTerm: String!): [Video]
   getVideosByProfileUsername(profileUsername: String!): [Video]
   video(id:ID!): Video @authorizeoptional

@@ -111,6 +111,11 @@ func (r *queryResolver) Videos(ctx context.Context, amount *int) ([]*model.Video
 }
 
 // // foo
+func (r *queryResolver) GetMultipleVideosSetOrder(ctx context.Context, seed *float64, limit *int, offset *int) ([]*model.Video, error) {
+	panic("not implemented")
+}
+
+// // foo
 func (r *queryResolver) SearchForVideoByTitle(ctx context.Context, searchTerm string) ([]*model.Video, error) {
 	panic("not implemented")
 }

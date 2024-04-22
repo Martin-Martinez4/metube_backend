@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github/Martin-Martinez4/metube_backend/graph/model"
 	"github/Martin-Martinez4/metube_backend/utils"
 )
@@ -18,6 +19,7 @@ type VideoService interface {
 	GetProfile(ctx context.Context, id string) (*model.Profile, error)
 	GetVideosByProfileUsername(profileUsername string) ([]*model.Video, error)
 	GetMultipleVideos(amount int) ([]*model.Video, error)
+	GetMultipleVideosSetOrder(ctx context.Context, seed *float64, limit *int, offset *int) ([]*model.Video, error)
 }
 
 type VideoServiceSQL struct {
@@ -81,6 +83,45 @@ func (vsql *VideoServiceSQL) GetMultipleVideos(amount int) ([]*model.Video, erro
 		}
 
 		videos = append(videos, &video)
+	}
+
+	return videos, nil
+}
+
+func (vsql *VideoServiceSQL) GetMultipleVideosSetOrder(ctx context.Context, seed *float64, limit *int, offset *int) ([]*model.Video, error) {
+	// Limit the amount
+	tx, err := vsql.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	// BEGIN; SELECT setseed(0.5); SELECT id, url, categoryid, duration, profile_id FROM video ORDER BY RANDOM() LIMIT 5; COMMIT;
+	_, err = vsql.DB.Exec("SELECT setseed($1)", seed)
+	if err != nil {
+		return nil, err
+	}
+	rows, _ := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM video ORDER BY RANDOM() LIMIT $1 OFFSET $2", limit, offset)
+
+	videos := []*model.Video{}
+
+	fmt.Println(rows)
+	for rows.Next() {
+
+		video := model.Video{}
+
+		err := rows.Scan(&video.ID, &video.URL, &video.Categoryid, &video.Duration, &video.ProfileID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		videos = append(videos, &video)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, err
 	}
 
 	return videos, nil

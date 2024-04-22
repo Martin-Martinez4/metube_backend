@@ -125,6 +125,9 @@ func (r *mutationResolver) DeleteLikeDislikeComment(ctx context.Context, comment
 func (r *queryResolver) Videos(ctx context.Context, amount *int) ([]*model.Video, error) {
 	return r.VideoService.GetMultipleVideos(*amount)
 }
+func (r *queryResolver) GetMultipleVideosSetOrder(ctx context.Context, seed *float64, limit *int, offset *int) ([]*model.Video, error) {
+	return r.VideoService.GetMultipleVideosSetOrder(ctx, seed, limit, offset)
+}
 
 // Video is the resolver for the video field.
 func (r *queryResolver) Video(ctx context.Context, id string) (*model.Video, error) {
