@@ -30,7 +30,7 @@ func (vsql *VideoServiceSQL) GetVideoById(id string) (*model.Video, error) {
 
 	video := model.Video{}
 
-	row := vsql.DB.QueryRow("SELECT id, url, categoryid, duration, profile_id FROM video WHERE id = $1", id)
+	row := vsql.DB.QueryRow("SELECT id, url, categoryid, duration, profile_id FROM video WHERE id = $1 AND visible = TRUE", id)
 
 	err := row.Scan(&video.ID, &video.URL, &video.Categoryid, &video.Duration, &video.ProfileID)
 	if err != nil {
@@ -65,7 +65,7 @@ func (vsql *VideoServiceSQL) GetVideoLikeStatus(ctx context.Context, id string) 
 
 func (vsql *VideoServiceSQL) GetMultipleVideos(amount int) ([]*model.Video, error) {
 	// Limit the amount
-	rows, err := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM video ORDER BY RANDOM() LIMIT $1", amount)
+	rows, err := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM video WHERE visible = TRUE ORDER BY RANDOM() LIMIT $1", amount)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (vsql *VideoServiceSQL) GetMultipleVideosSetOrder(ctx context.Context, seed
 	if err != nil {
 		return nil, err
 	}
-	rows, _ := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM video ORDER BY RANDOM() LIMIT $1 OFFSET $2", limit, offset)
+	rows, _ := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM video WHERE visible = TRUE ORDER BY RANDOM() LIMIT $1 OFFSET $2", limit, offset)
 
 	videos := []*model.Video{}
 
@@ -212,7 +212,7 @@ func (vsql *VideoServiceSQL) SearchForVideoByTitle(searchTerm string) ([]*model.
 	// FROM contentinformation
 	// WHERE similarity(title, 'JavaScript') > .09;
 
-	rows, err := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM contentinformation JOIN video ON contentinformation.video_id = video.id WHERE similarity(contentinformation.title, $1) > $2", searchTerm, similarityThershold)
+	rows, err := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM contentinformation JOIN video ON contentinformation.video_id = video.id WHERE similarity(contentinformation.title, $1) > $2 AND video.visible = TRUE", searchTerm, similarityThershold)
 	if err != nil {
 		return nil, err
 	}
