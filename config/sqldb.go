@@ -15,6 +15,7 @@ func GetDB(driverName string, sqlURI string) *sql.DB {
 
 		_db, err := sql.Open(driverName, sqlURI)
 		db = _db
+		db.SetMaxOpenConns(90)
 		if err != nil {
 			panic(err)
 		}

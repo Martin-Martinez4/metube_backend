@@ -103,6 +103,7 @@ func (vsql *VideoServiceSQL) GetMultipleVideosSetOrder(ctx context.Context, seed
 		return nil, err
 	}
 	rows, _ := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM video WHERE visible = TRUE ORDER BY RANDOM() LIMIT $1 OFFSET $2", limit, offset)
+	defer rows.Close()
 
 	videos := []*model.Video{}
 
@@ -237,10 +238,11 @@ func (vsql *VideoServiceSQL) SearchForVideoByTitle(searchTerm string) ([]*model.
 
 func (vsql *VideoServiceSQL) GetVideosByProfileUsername(profileUsername string) ([]*model.Video, error) {
 
-	rows, err := vsql.DB.Query("SELECT video.id, url, categoryid, duration, profile_id FROM video JOIN profile ON profile.id = video.profile_id WHERE profile.username =$1", profileUsername)
+	rows, err := vsql.DB.Query("SELECT video.id, url, categoryid, duration, profile_id FROM video JOIN profile ON profile.id = video.profile_id WHERE profile.username =$1 AND video.visible=true", profileUsername)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	videos := []*model.Video{}
 
