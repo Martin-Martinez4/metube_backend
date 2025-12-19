@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github/Martin-Martinez4/metube_backend/graph/model"
 	"github/Martin-Martinez4/metube_backend/utils"
 )
@@ -16,7 +17,9 @@ type VideoService interface {
 	GetStatistic(id string) (*model.Statistic, error)
 	GetStatus(id string) (*model.Status, error)
 	GetProfile(ctx context.Context, id string) (*model.Profile, error)
+	GetVideosByProfileUsername(profileUsername string) ([]*model.Video, error)
 	GetMultipleVideos(amount int) ([]*model.Video, error)
+	GetMultipleVideosSetOrder(ctx context.Context, seed *float64, limit *int, offset *int) ([]*model.Video, error)
 }
 
 type VideoServiceSQL struct {
@@ -27,7 +30,7 @@ func (vsql *VideoServiceSQL) GetVideoById(id string) (*model.Video, error) {
 
 	video := model.Video{}
 
-	row := vsql.DB.QueryRow("SELECT id, url, categoryid, duration, profile_id FROM video WHERE id = $1", id)
+	row := vsql.DB.QueryRow("SELECT id, url, categoryid, duration, profile_id FROM video WHERE id = $1 AND visible = TRUE", id)
 
 	err := row.Scan(&video.ID, &video.URL, &video.Categoryid, &video.Duration, &video.ProfileID)
 	if err != nil {
@@ -62,7 +65,7 @@ func (vsql *VideoServiceSQL) GetVideoLikeStatus(ctx context.Context, id string) 
 
 func (vsql *VideoServiceSQL) GetMultipleVideos(amount int) ([]*model.Video, error) {
 	// Limit the amount
-	rows, err := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM video ORDER BY RANDOM() LIMIT $1", amount)
+	rows, err := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM video WHERE visible = TRUE ORDER BY RANDOM() LIMIT $1", amount)
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +83,46 @@ func (vsql *VideoServiceSQL) GetMultipleVideos(amount int) ([]*model.Video, erro
 		}
 
 		videos = append(videos, &video)
+	}
+
+	return videos, nil
+}
+
+func (vsql *VideoServiceSQL) GetMultipleVideosSetOrder(ctx context.Context, seed *float64, limit *int, offset *int) ([]*model.Video, error) {
+	// Limit the amount
+	tx, err := vsql.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	// BEGIN; SELECT setseed(0.5); SELECT id, url, categoryid, duration, profile_id FROM video ORDER BY RANDOM() LIMIT 5; COMMIT;
+	_, err = vsql.DB.Exec("SELECT setseed($1)", seed)
+	if err != nil {
+		return nil, err
+	}
+	rows, _ := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM video WHERE visible = TRUE ORDER BY RANDOM() LIMIT $1 OFFSET $2", limit, offset)
+	defer rows.Close()
+
+	videos := []*model.Video{}
+
+	fmt.Println(rows)
+	for rows.Next() {
+
+		video := model.Video{}
+
+		err := rows.Scan(&video.ID, &video.URL, &video.Categoryid, &video.Duration, &video.ProfileID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		videos = append(videos, &video)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, err
 	}
 
 	return videos, nil
@@ -170,10 +213,36 @@ func (vsql *VideoServiceSQL) SearchForVideoByTitle(searchTerm string) ([]*model.
 	// FROM contentinformation
 	// WHERE similarity(title, 'JavaScript') > .09;
 
-	rows, err := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM contentinformation JOIN video ON contentinformation.video_id = video.id WHERE similarity(contentinformation.title, $1) > $2", searchTerm, similarityThershold)
+	rows, err := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM contentinformation JOIN video ON contentinformation.video_id = video.id WHERE similarity(contentinformation.title, $1) > $2 AND video.visible = TRUE", searchTerm, similarityThershold)
 	if err != nil {
 		return nil, err
 	}
+
+	videos := []*model.Video{}
+
+	for rows.Next() {
+
+		video := model.Video{}
+
+		err := rows.Scan(&video.ID, &video.URL, &video.Categoryid, &video.Duration, &video.ProfileID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		videos = append(videos, &video)
+	}
+
+	return videos, nil
+}
+
+func (vsql *VideoServiceSQL) GetVideosByProfileUsername(profileUsername string) ([]*model.Video, error) {
+
+	rows, err := vsql.DB.Query("SELECT video.id, url, categoryid, duration, profile_id FROM video JOIN profile ON profile.id = video.profile_id WHERE profile.username =$1 AND video.visible=true", profileUsername)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
 	videos := []*model.Video{}
 

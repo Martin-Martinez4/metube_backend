@@ -21,7 +21,7 @@ type AuthService interface {
 }
 
 type AuthServiceSQL struct {
-	DB *sql.DB
+	DB *(sql.DB)
 }
 
 func (authsql *AuthServiceSQL) Login(ctx context.Context, login model.LoginInput) (*model.Profile, error) {
