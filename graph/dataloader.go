@@ -5,13 +5,42 @@ import (
 	"database/sql"
 	"fmt"
 	"github/Martin-Martinez4/metube_backend/graph/model"
+	"github/Martin-Martinez4/metube_backend/graph/services"
 	"net/http"
 	"time"
+
+	"github.com/graph-gophers/dataloader/v7"
 )
 
 // go run github.com/vektah/dataloaden VideoLoader string *github/Martin-Martinez4/metube_backend/graph/model.Video
 
 const profileLoaderKey = "profileloader"
+const loadersKey = "loadersKey"
+
+type Loaders struct {
+	ContentLoader    *dataloader.Loader[string, *model.ContentInformation]
+	ThumbnailLoader  *dataloader.Loader[string, *model.Thumbnail]
+	StatisticsLoader *dataloader.Loader[string, *model.Statistic]
+}
+
+func NewLoaders(db *sql.DB) *Loaders {
+	reader := &services.VideoServiceSQL{DB: db}
+	return &Loaders{
+		ContentLoader: dataloader.NewBatchedLoader(
+			reader.BatchContentInformation,
+		),
+		ThumbnailLoader: dataloader.NewBatchedLoader(
+			reader.BatchGetThumbnail,
+		),
+		StatisticsLoader: dataloader.NewBatchedLoader(
+			reader.BatchGetStatistic,
+		),
+	}
+}
+
+func GetLoaders(ctx context.Context) *Loaders {
+	return ctx.Value(loadersKey).(*Loaders)
+}
 
 func DatatloaderMiddleware(db *sql.DB, next http.Handler) http.Handler {
 
@@ -82,6 +111,9 @@ func DatatloaderMiddleware(db *sql.DB, next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(res.Context(), profileLoaderKey, &profileLoader)
+
+		loaders := NewLoaders(db)
+		ctx = context.WithValue(ctx, loadersKey, loaders)
 
 		next.ServeHTTP(w, res.WithContext(ctx))
 	})

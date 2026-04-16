@@ -172,17 +172,39 @@ func (r *queryResolver) GetMentions(ctx context.Context) ([]*model.Comment, erro
 
 // Contentinformation is the resolver for the contentinformation field.
 func (r *videoResolver) Contentinformation(ctx context.Context, obj *model.Video) (*model.ContentInformation, error) {
-	return r.VideoService.GetContentInformation(obj.ID)
+	loaders := GetLoaders(ctx)
+
+	result, err := loaders.ContentLoader.Load(ctx, obj.ID)()
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+	// return r.VideoService.GetContentInformation(obj.ID)
 }
 
 // Thumbnail is the resolver for the thumbnail field.
 func (r *videoResolver) Thumbnail(ctx context.Context, obj *model.Video) (*model.Thumbnail, error) {
-	return r.VideoService.GetThumbnail(obj.ID)
+	loaders := GetLoaders(ctx)
+
+	result, err := loaders.ThumbnailLoader.Load(ctx, obj.ID)()
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+
+	// return r.VideoService.GetThumbnail(obj.ID)
 }
 
 // Statistic is the resolver for the statistic field.
 func (r *videoResolver) Statistic(ctx context.Context, obj *model.Video) (*model.Statistic, error) {
-	return r.VideoService.GetStatistic(obj.ID)
+	loaders := GetLoaders(ctx)
+
+	result, err := loaders.StatisticsLoader.Load(ctx, obj.ID)()
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+	// return r.VideoService.GetStatistic(obj.ID)
 }
 
 // Status is the resolver for the status field.

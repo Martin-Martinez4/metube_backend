@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"github/Martin-Martinez4/metube_backend/graph/model"
 	"github/Martin-Martinez4/metube_backend/utils"
+
+	"github.com/lib/pq"
+
+	"github.com/graph-gophers/dataloader/v7"
 )
 
 type VideoService interface {
@@ -24,6 +28,20 @@ type VideoService interface {
 
 type VideoServiceSQL struct {
 	DB *sql.DB
+}
+
+func mapResults[K comparable, V any](keys []K, data map[K]V) []*dataloader.Result[V] {
+	results := make([]*dataloader.Result[V], len(keys))
+
+	for i, key := range keys {
+		if val, ok := data[key]; ok {
+			results[i] = &dataloader.Result[V]{Data: val}
+		} else {
+			results[i] = &dataloader.Result[V]{Data: *new(V)}
+		}
+	}
+
+	return results
 }
 
 func (vsql *VideoServiceSQL) GetVideoById(id string) (*model.Video, error) {
@@ -146,6 +164,49 @@ func (vsql *VideoServiceSQL) GetContentInformation(id string) (*model.ContentInf
 	return &contentinformation, nil
 }
 
+func (vsql *VideoServiceSQL) BatchContentInformation(ctx context.Context, keys []string) []*dataloader.Result[*model.ContentInformation] {
+	query := `
+		SELECT video_id, title, description, channelid, published 
+		FROM contentinformation 
+		WHERE video_id = ANY($1)
+	`
+
+	rows, err := vsql.DB.QueryContext(ctx, query, pq.Array(keys))
+	if err != nil {
+		results := make([]*dataloader.Result[*model.ContentInformation], len(keys))
+		for i := range results {
+			results[i] = &dataloader.Result[*model.ContentInformation]{Error: err}
+		}
+
+		return results
+	}
+	defer rows.Close()
+
+	contentMap := make(map[string]*model.ContentInformation)
+
+	for rows.Next() {
+		var videoID string
+		var title string
+		var description string
+		var channelID string
+		var published string
+
+		if err := rows.Scan(&videoID, &description, &title, &channelID, &published); err != nil {
+			continue
+		}
+
+		contentMap[videoID] = &model.ContentInformation{
+			Title:     title,
+			Channelid: channelID,
+			Published: published,
+		}
+
+	}
+
+	return mapResults(keys, contentMap)
+
+}
+
 func (vsql *VideoServiceSQL) GetThumbnail(id string) (*model.Thumbnail, error) {
 	row := vsql.DB.QueryRow("SELECT url FROM thumbnail WHERE video_id = $1", id)
 
@@ -159,6 +220,39 @@ func (vsql *VideoServiceSQL) GetThumbnail(id string) (*model.Thumbnail, error) {
 	return &thumbnail, nil
 }
 
+func (vsql *VideoServiceSQL) BatchGetThumbnail(ctx context.Context, keys []string) []*dataloader.Result[*model.Thumbnail] {
+	query := "SELECT video_id, url FROM thumbnail WHERE video_id = ANY($1)"
+	rows, err := vsql.DB.QueryContext(ctx, query, pq.Array(keys))
+	if err != nil {
+		results := make([]*dataloader.Result[*model.Thumbnail], len(keys))
+
+		for i := range results {
+			results[i] = &dataloader.Result[*model.Thumbnail]{Error: err}
+		}
+
+		return results
+	}
+	defer rows.Close()
+
+	thumbnailMap := make(map[string]*model.Thumbnail)
+
+	for rows.Next() {
+		var videoID string
+		var url string
+
+		if err := rows.Scan(&videoID, &url); err != nil {
+			continue
+		}
+
+		thumbnailMap[videoID] = &model.Thumbnail{
+			URL: url,
+		}
+	}
+
+	return mapResults(keys, thumbnailMap)
+
+}
+
 func (vsql *VideoServiceSQL) GetStatistic(id string) (*model.Statistic, error) {
 	row := vsql.DB.QueryRow("SELECT likes, dislikes, views, favorites, comments FROM statistic WHERE video_id = $1", id)
 
@@ -170,6 +264,42 @@ func (vsql *VideoServiceSQL) GetStatistic(id string) (*model.Statistic, error) {
 	}
 
 	return &statistic, nil
+}
+
+func (vsql *VideoServiceSQL) BatchGetStatistic(ctx context.Context, keys []string) []*dataloader.Result[*model.Statistic] {
+	query := "SELECT video_id, likes, dislikes, views, favorites, comments FROM statistic WHERE video_id = ANY($1)"
+	rows, err := vsql.DB.QueryContext(ctx, query, pq.Array(keys))
+	if err != nil {
+		results := make([]*dataloader.Result[*model.Statistic], len(keys))
+		for i := range results {
+			results[i] = &dataloader.Result[*model.Statistic]{Error: err}
+		}
+
+		return results
+	}
+	defer rows.Close()
+
+	statsMap := make(map[string]*model.Statistic)
+
+	for rows.Next() {
+		var videoID string
+		var likes, dislikes, views, favorites, comments int
+
+		if err := rows.Scan(&videoID, &likes, &dislikes, &views, &favorites, &comments); err != nil {
+			continue
+		}
+		statsMap[videoID] = &model.Statistic{
+			Likes:     likes,
+			Dislikes:  dislikes,
+			Views:     views,
+			Favorites: &favorites,
+			Comments:  comments,
+		}
+
+	}
+
+	return mapResults(keys, statsMap)
+
 }
 
 func (vsql *VideoServiceSQL) GetStatus(id string) (*model.Status, error) {
