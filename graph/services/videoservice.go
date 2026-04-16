@@ -102,6 +102,10 @@ func (vsql *VideoServiceSQL) GetMultipleVideosSetOrder(ctx context.Context, seed
 	if err != nil {
 		return nil, err
 	}
+	_, err = vsql.DB.Exec(`SET pg_trgm.similarity_threshold = 0.05;`)
+	if err != nil {
+		return nil, err
+	}
 	rows, _ := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM video WHERE visible = TRUE ORDER BY RANDOM() LIMIT $1 OFFSET $2", limit, offset)
 	defer rows.Close()
 
@@ -206,14 +210,21 @@ func (vsql *VideoServiceSQL) GetProfile(ctx context.Context, id string) (*model.
 
 func (vsql *VideoServiceSQL) SearchForVideoByTitle(searchTerm string) ([]*model.Video, error) {
 
-	var similarityThershold float32 = 0.09
+	// var similarityThershold float32 = 0.09
 
 	// 	SELECT
 	// 	title
 	// FROM contentinformation
 	// WHERE similarity(title, 'JavaScript') > .09;
 
-	rows, err := vsql.DB.Query("SELECT id, url, categoryid, duration, profile_id FROM contentinformation JOIN video ON contentinformation.video_id = video.id WHERE similarity(contentinformation.title, $1) > $2 AND video.visible = TRUE", searchTerm, similarityThershold)
+	rows, err := vsql.DB.Query(`
+		SELECT v.id, v.url, v.categoryid, v.duration, v.profile_id
+		FROM contentinformation ci
+		JOIN video v ON ci.video_id = v.id
+		WHERE ci.title % $1
+		  AND v.visible = TRUE
+		ORDER BY similarity(ci.title, $1) DESC
+	`, searchTerm)
 	if err != nil {
 		return nil, err
 	}
