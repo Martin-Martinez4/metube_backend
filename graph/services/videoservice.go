@@ -191,7 +191,7 @@ func (vsql *VideoServiceSQL) BatchContentInformation(ctx context.Context, keys [
 		var channelID string
 		var published string
 
-		if err := rows.Scan(&videoID, &description, &title, &channelID, &published); err != nil {
+		if err := rows.Scan(&videoID, &title, &description, &channelID, &published); err != nil {
 			continue
 		}
 
