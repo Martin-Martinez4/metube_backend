@@ -196,9 +196,10 @@ func (vsql *VideoServiceSQL) BatchContentInformation(ctx context.Context, keys [
 		}
 
 		contentMap[videoID] = &model.ContentInformation{
-			Title:     title,
-			Channelid: channelID,
-			Published: published,
+			Title:       title,
+			Description: description,
+			Channelid:   channelID,
+			Published:   published,
 		}
 
 	}
